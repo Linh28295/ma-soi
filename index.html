@@ -857,15 +857,15 @@ $("btn-hof").onclick=()=>{
 async function showRules(first){
   const det=document.querySelector(".side details");
   const html=[...det.children].filter(x=>x.tagName!=="SUMMARY").map(x=>x.outerHTML).join("");
-  await modal("📜 Cách chơi Ma Sói — đọc trước khi vào làng",
+  return await modal("📜 Cách chơi Ma Sói — đọc trước khi vào làng",
     `<div style="max-height:58vh;overflow-y:auto;text-align:left;padding-right:6px">${html}</div>`,
-    [first?"Đã hiểu — vào làng 🐺":"Đóng"]);
+    first?["Đã hiểu — vào làng 🐺","Đừng hiện lại lần sau"]:["Đóng"]);
 }
 (async function boot(){
   applyTheme(localStorage.getItem("masoi-theme")||"light");
-  if(!localStorage.getItem("masoi-rules-seen")){
-    await showRules(true);
-    try{localStorage.setItem("masoi-rules-seen","1");}catch(e){}
+  if(!localStorage.getItem("masoi-rules-skip")){
+    const ri=await showRules(true);
+    if(ri===1){try{localStorage.setItem("masoi-rules-skip","1");}catch(e){}}
   }
   const mi=await modal("🐺 MA SÓI — Làng Nanh Sữa",
     `<div style="text-align:left;font-size:12.5px;line-height:1.7">
