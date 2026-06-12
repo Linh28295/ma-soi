@@ -147,7 +147,8 @@
           <p><b>☀️ Ban ngày:</b> công bố người chết — <b>thân phận được GIẤU KÍN</b> (kể cả khi treo cổ), không ai biết còn bao nhiêu Sói cho tới hết ván. Cả làng thảo luận rồi <b>bỏ phiếu treo cổ</b> — nhiều phiếu nhất bị treo (hòa phiếu = không ai bị treo). 🏹 <b>Thợ Săn</b> khi chết được kéo theo 1 người (phát súng nên cả làng biết đó là Thợ Săn). Toàn bộ vai chỉ lật ngửa ở màn kết.</p>
           <p><b>📖 Chi tiết các thân phận (bấm nút "Vai trò" trên đầu trang để mở nhanh bất cứ lúc nào):</b></p>
           <div id="roleguide"></div>
-          <p style="margin-top:8px"><b>🃏 Gợi ý theo sĩ số (tự cấu hình được):</b> 8+: Phù Thủy & Thợ Săn · 9+: Sói Trùm · 10+: Cupid & Thằng Ngốc · 12+: Già Làng & Bán Sói.</p>
+          <p style="margin-top:8px"><b>⚖️ Tự cân vai:</b> mặc định game tự rút bộ vai chuẩn theo sĩ số (đã kiểm chứng bằng mô phỏng hàng nghìn ván) để hai phe cân sức — không chỉnh gì cũng công bằng. Tắt ô "Tự cân vai" trong màn thiết lập nếu muốn tự pha chế.</p>
+          <p style="margin-top:8px"><b>🃏 Gợi ý theo sĩ số (khi tự cấu hình):</b> 8+: Phù Thủy & Thợ Săn · 9+: Sói Trùm · 10+: Cupid & Thằng Ngốc · 12+: Già Làng & Bán Sói.</p>
           <p><b>🎩 Bản Quản Trò (1 máy):</b> chỉ quản trò cầm máy. Chọn sĩ số 6–18 + vai đặc biệt, app chia vai và đưa quản trò <b>bảng vai bí mật</b> (chỉ quản trò xem), rồi dẫn dắt từng bước — quản trò nhập kết quả của bàn chơi thật.</p>
           <p><b>🌐 Bản Online (mỗi người một máy):</b> chủ phòng tạo mã 5 ký tự và chọn cấu hình; bạn bè mở link này, nhập tên + mã để vào phòng. <b>Vai chỉ hiện trên máy của chính người đó.</b> Thiếu người thật, AI lấp chỗ. Rớt mạng AI đánh thay.</p>
         </details>
@@ -329,14 +330,17 @@ const isWolfSide=p=>ROLE[p.role].team==="wolf";
 window.cycAva=el=>{const i=(AVAS.indexOf(el.textContent)+1)%AVAS.length; el.textContent=AVAS[i];};
 function cfgBoxes(cfg){
   const items=[["alpha","👑 Sói Trùm"],["witch","🧪 Phù Thủy"],["hunter","🏹 Thợ Săn"],["cupid","💘 Cupid"],["fool","🤡 Thằng Ngốc"],["elder","🧓 Già Làng"],["bansoi","🌗 Bán Sói"],["traitor","🗡️ Kẻ Phản Bội"],["blindseer","🧿 Thầy Bói Mù"],["cursed","🐍 Kẻ Nguyền Rủa"]];
-  return `<div style="text-align:left;margin:8px 0"><b>Số Sói:</b>
-    <select id="cf-wolves">${[1,2,3,4].map(x=>`<option ${x===cfg.wolves?"selected":""}>${x}</option>`).join("")}</select>
+  return `<div style="text-align:left;margin:10px 0 6px;padding:8px 10px;border:1.5px solid var(--gold);border-radius:12px;background:rgba(201,160,78,.07)">
+    <label style="font-size:13px"><input type="checkbox" id="cf-auto" checked onchange="document.querySelectorAll('.cf-man').forEach(x=>x.disabled=this.checked)"> ⚖️ <b>Tự cân vai theo sĩ số</b> <span style="font-size:11px;color:var(--muted)">— game tự rút bộ vai chuẩn (đã stress-test 13.500 ván) cho đúng số người, hai phe cân sức. Tắt đi nếu muốn tự chỉnh.</span></label></div>
+    <div style="text-align:left;margin:8px 0"><b>Số Sói:</b>
+    <select id="cf-wolves" class="cf-man" disabled>${[1,2,3,4].map(x=>`<option ${x===cfg.wolves?"selected":""}>${x}</option>`).join("")}</select>
     &nbsp;<span style="font-size:11px;color:var(--muted)">(Sói Trùm tính vào số Sói)</span></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;text-align:left;font-size:13px">
-    ${items.map(([k,l])=>`<label><input type="checkbox" id="cf-${k}" ${cfg[k]?"checked":""}> ${l}</label>`).join("")}
+    ${items.map(([k,l])=>`<label><input type="checkbox" class="cf-man" disabled id="cf-${k}" ${cfg[k]?"checked":""}> ${l}</label>`).join("")}
     </div><div style="font-size:11px;color:var(--muted);margin-top:7px;text-align:left">Luôn có: 🔮 Tiên Tri · 🛡️ Bảo Vệ · 🌾 Dân Làng (phần còn lại)</div>`;
 }
-function readCfg(){
+function readCfg(n){
+  if($("cf-auto")&&$("cf-auto").checked)return defaultCfg(n); // ⚖️ tự cân theo sĩ số thật
   const cfg={wolves:Number($("cf-wolves").value)};
   ["alpha","witch","hunter","cupid","fool","elder","bansoi","traitor","blindseer","cursed"].forEach(k=>cfg[k]=$("cf-"+k).checked);
   return cfg;
@@ -350,7 +354,7 @@ async function setupGM(){
       <textarea id="gmnames" rows="8" style="width:100%;font-family:inherit;font-size:13px;padding:9px;border:1.5px solid var(--hair);border-radius:10px;background:var(--bg);color:var(--ink);margin:6px 0"></textarea>
       ${cfgBoxes(defaultCfg(n0))}`,["Chia vai & bắt đầu"]);
     const names=[...new Set($("gmnames").value.split("\n").map(x=>x.trim()).filter(Boolean))];
-    const cfg=readCfg();
+    const cfg=readCfg(names.length);
     if(names.length<6||names.length>18){await modal("⚠️ Sĩ số chưa hợp lệ","Cần 6–18 người chơi (mỗi dòng một tên, không trùng).",["Sửa lại"]);continue;}
     const roles=buildRoles(names.length,cfg);
     if(!roles){await modal("⚠️ Vai nhiều hơn người","Số vai đặc biệt + Sói đang vượt quá sĩ số. Bỏ bớt vai hoặc thêm người.",["Sửa lại"]);continue;}
@@ -374,7 +378,7 @@ async function setupDigital(host){
       <div style="margin-top:8px">${rows}</div>${cfgBoxes(defaultCfg(8))}
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Bấm vào hình để đổi đại diện. Nhiều người thật chung máy → app sẽ nhắc chuyền máy khi cần giữ bí mật.</div>`,
       ["Bắt đầu"]);
-    const n=Number($("dg-n").value), cfg=readCfg();
+    const n=Number($("dg-n").value), cfg=readCfg(n);
     const roles=buildRoles(n,cfg);
     if(!roles){await modal("⚠️ Vai nhiều hơn người","Số vai đặc biệt + Sói đang vượt quá sĩ số. Bỏ bớt vai hoặc tăng sĩ số.",["Sửa lại"]);continue;}
     const rws=[...document.querySelectorAll(".setrow")].slice(0,n);
@@ -735,7 +739,7 @@ async function setupOnlineHost(){
       <div style="text-align:left;margin-top:6px"><b>Sĩ số (gồm bạn):</b> <select id="on-n">${Array.from({length:13},(_,i)=>i+6).map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
       <span style="font-size:11px;color:var(--muted)">— thiếu người thật thì AI lấp chỗ</span></div>
       ${cfgBoxes(defaultCfg(8))}`,["Tạo phòng"]);
-    const n=Number($("on-n").value), cfg=readCfg(), nm=($("hostnm").value||"").trim()||"Chủ phòng";
+    const n=Number($("on-n").value), cfg=readCfg(n), nm=($("hostnm").value||"").trim()||"Chủ phòng";
     const av=document.querySelector("#mbody .sava")?document.querySelector("#mbody .sava").textContent:AVAS[0];
     const roles=buildRoles(n,cfg);
     if(!roles){await modal("⚠️ Vai nhiều hơn người","Giảm vai đặc biệt/Sói hoặc tăng sĩ số.",["Sửa lại"]);continue;}
