@@ -118,9 +118,10 @@
 <div id="app">
   <header>
     <div class="logo">🐺</div>
-    <div><h1>MA SÓI</h1><div class="sub">LÀNG TRĂNG MƠ · 6–12 NGƯỜI · ONLINE</div></div>
+    <div><h1>MA SÓI</h1><div class="sub">LÀNG TRĂNG MƠ · 6–18 NGƯỜI · 2 PHIÊN BẢN</div></div>
     <div class="hbtns">
       <button id="btn-theme" class="btn-ghost">Giao diện: Light</button>
+      <button id="btn-roles" class="btn-ghost">📖 Vai trò</button>
       <button id="btn-hof" class="btn-ghost">Bảng vàng</button>
       <button id="btn-sound" class="btn-ghost">Âm thanh: Bật</button>
       <button id="btn-speed" class="btn-ghost">Tốc độ: Thường</button>
@@ -141,9 +142,11 @@
           <p><b>🎯 Mục tiêu:</b> làng chia 2 phe. <b>Phe Sói</b> 🐺 thắng khi số Sói ≥ số người còn lại. <b>Phe Dân</b> thắng khi treo cổ hết Sói.</p>
           <p><b>🌙 Ban đêm:</b> cả làng nhắm mắt. Lần lượt: 🛡️ <b>Bảo Vệ</b> chọn người che chắn (không lặp lại đêm liền trước) → 🐺 <b>Bầy Sói</b> thống nhất cắn 1 người → 🔮 <b>Tiên Tri</b> soi 1 người là Sói hay không → 🧪 <b>Phù Thủy</b> thấy nạn nhân, có 1 bình cứu và 1 bình độc (mỗi bình dùng đúng 1 lần cả ván).</p>
           <p><b>☀️ Ban ngày:</b> công bố người chết (lộ vai). Cả làng thảo luận rồi <b>bỏ phiếu treo cổ</b> — nhiều phiếu nhất bị treo (hòa phiếu = không ai bị treo). 🏹 <b>Thợ Săn</b> khi chết được kéo theo 1 người.</p>
-          <p><b>🃏 Vai trò theo sĩ số:</b> 6–7 người: 2 Sói + Tiên Tri + Bảo Vệ + Dân · 8–9: thêm Phù Thủy · 10–12: thêm Thợ Săn và Sói thứ 3.</p>
-          <p><b>🙈 Giữ bí mật vai:</b> chơi chung một máy thì máy sẽ nhắc "chuyền máy cho ai" trước mỗi hành động kín — người khác nhớ quay đi nhé.</p>
-          <p><b>🌐 Chơi online:</b> một người "Tạo phòng" lấy mã 5 ký tự, bạn bè mở link này chọn "Vào phòng". Vai trò gửi riêng cho từng người. Rớt mạng AI đánh thay.</p>
+          <p><b>📖 Chi tiết các thân phận (bấm nút "Vai trò" trên đầu trang để mở nhanh bất cứ lúc nào):</b></p>
+          <div id="roleguide"></div>
+          <p style="margin-top:8px"><b>🃏 Gợi ý theo sĩ số (tự cấu hình được):</b> 8+: Phù Thủy & Thợ Săn · 9+: Sói Trùm · 10+: Cupid & Thằng Ngốc · 12+: Già Làng & Bán Sói.</p>
+          <p><b>🎩 Bản Quản Trò (1 máy):</b> chỉ quản trò cầm máy. Chọn sĩ số 6–18 + vai đặc biệt, app chia vai và đưa quản trò <b>bảng vai bí mật</b> (chỉ quản trò xem), rồi dẫn dắt từng bước — quản trò nhập kết quả của bàn chơi thật.</p>
+          <p><b>🌐 Bản Online (mỗi người một máy):</b> chủ phòng tạo mã 5 ký tự và chọn cấu hình; bạn bè mở link này, nhập tên + mã để vào phòng. <b>Vai chỉ hiện trên máy của chính người đó.</b> Thiếu người thật, AI lấp chỗ. Rớt mạng AI đánh thay.</p>
         </details>
       </div>
     </div>
@@ -351,7 +354,7 @@ async function setupGM(){
 async function setupDigital(host){
   while(true){
     const rows=Array.from({length:12},(_,i)=>{
-      const kinds=host?["Người (máy này)","AI","Bạn online"]:["Người (máy này)","AI"];
+      const kinds=["Người (máy này)","AI"];
       return `<div class="setrow" data-i="${i}" ${i>=8?'style="display:none"':""}>
         <span class="sava" onclick="cycAva(this)">${AVAS[i%AVAS.length]}</span>
         <input value="${i===0?"Người chơi 1":"AI "+["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc"][(i-1+11)%11]}">
@@ -669,30 +672,67 @@ async function revealRoles(){
 }
 
 /* ============ ONLINE ============ */
-function hostLobby(code){
+function hostLobby2(code,total){
   return new Promise(res=>{
-    const need=P.filter(isRem); let got=0;
+    const joined=[];
     const upd=()=>{
       $("mtitle").innerHTML="🌐 Phòng "+code;
-      $("mbody").innerHTML=`Gửi mã <b style="font-size:24px;letter-spacing:5px;color:var(--accent)">${code}</b> cho bạn bè — họ mở đúng link game này và chọn <b>"Vào phòng online"</b>.<br><br>Đã vào: <b>${got}/${need.length}</b>`;
-      $("mbtns").innerHTML="";
+      $("mbody").innerHTML=`Bạn bè mở đúng link game này → <b>"Vào phòng online"</b> → nhập tên + mã:<div style="font-size:26px;letter-spacing:6px;color:var(--accent);font-weight:800;margin:8px 0">${code}</div>Đã vào (${joined.length}/${total-1} chỗ khách): <b>${joined.map(j=>j.name).join(", ")||"chưa có ai"}</b>`;
+      const mb=$("mbtns"); mb.innerHTML="";
+      const b=document.createElement("button"); b.className="btn-main";
+      b.textContent=joined.length>=total-1?"Bắt đầu":"Bắt đầu ngay (AI lấp chỗ trống)";
+      b.onclick=()=>{$("overlay").style.display="none";res(joined);};
+      mb.appendChild(b);
     };
     $("overlay").style.display="flex"; upd();
     NET.peer.on("connection",c=>{
-      const slot=need.find(p=>!NET.conns[p.id]);
-      if(!slot){try{c.close();}catch(e){} return;}
-      NET.conns[slot.id]=c;
-      c.on("open",()=>{
-        got++; upd();
-        c.send(JSON.stringify({t:"hello",name:slot.name}));
-        if(got>=need.length){$("overlay").style.display="none";res();}
+      let me=null;
+      c.on("data",d=>{
+        let m; try{m=JSON.parse(d);}catch(e){return;}
+        if(m.t==="join"&&!me){
+          if(joined.length>=total-1||P.length){try{c.send(JSON.stringify({t:"notice",title:"⚠️ Phòng đầy",body:"Phòng đã đủ người hoặc đã bắt đầu."}));}catch(e){} return;}
+          me={conn:c,name:(m.name||"Khách").slice(0,16)}; joined.push(me); upd();
+          try{c.send(JSON.stringify({t:"hello",name:me.name}));}catch(e){}
+        }
+        else if(m.t==="ans"&&NET.pending[m.seq]!==undefined){const r=NET.pending[m.seq];delete NET.pending[m.seq];r(m.idx);}
       });
-      c.on("data",d=>{try{const m=JSON.parse(d);
-        if(m.t==="ans"&&NET.pending[m.seq]){const r=NET.pending[m.seq];delete NET.pending[m.seq];r(m.idx);}
-      }catch(e){}});
-      c.on("close",()=>onGuestDrop(slot.id));
+      c.on("close",()=>{
+        if(me&&!P.length){const i=joined.indexOf(me);if(i>-1){joined.splice(i,1);upd();}}
+        else{const pid=Object.keys(NET.conns).find(k=>NET.conns[k]===c);if(pid!==undefined)onGuestDrop(Number(pid));}
+      });
     });
   });
+}
+async function setupOnlineHost(){
+  MODE="online"; NET.mode="host";
+  while(true){
+    await modal("🌐 Tạo phòng — cấu hình ván",
+      `<div class="setrow"><span class="sava" onclick="cycAva(this)">${AVAS[0]}</span><input id="hostnm" value="Chủ phòng" placeholder="Tên của bạn"></div>
+      <div style="text-align:left;margin-top:6px"><b>Sĩ số (gồm bạn):</b> <select id="on-n">${Array.from({length:11},(_,i)=>i+6).map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
+      <span style="font-size:11px;color:var(--muted)">— thiếu người thật thì AI lấp chỗ</span></div>
+      ${cfgBoxes(defaultCfg(8))}`,["Tạo phòng"]);
+    const n=Number($("on-n").value), cfg=readCfg(), nm=($("hostnm").value||"").trim()||"Chủ phòng";
+    const av=document.querySelector("#mbody .sava")?document.querySelector("#mbody .sava").textContent:AVAS[0];
+    const roles=buildRoles(n,cfg);
+    if(!roles){await modal("⚠️ Vai nhiều hơn người","Giảm vai đặc biệt/Sói hoặc tăng sĩ số.",["Sửa lại"]);continue;}
+    NET.cfgRoles=roles; NET.total=n; NET.hostNm=nm; NET.hostAva=av; break;
+  }
+  const code=mkCode();
+  NET.peer=new Peer("masoi6-"+code);
+  const joined=await hostLobby2(code,NET.total);
+  const AINM=["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc","Bơ","Khế","Chanh","Quýt"];
+  const roles=NET.cfgRoles; P=[];
+  const mk=(name,ava,kind,id)=>({id,name,ava,kind,role:roles[id],alive:true,lover:-1,idol:-1,shield:roles[id]==="elder",mem:kind==="ai"?{susp:{},known:{}}:null});
+  P.push(mk(NET.hostNm,NET.hostAva,"local",0));
+  joined.forEach((j,k)=>{const id=k+1;P.push(mk(j.name,AVAS[id%AVAS.length],"remote",id));NET.conns[id]=j.conn;});
+  for(let id=joined.length+1;id<NET.total;id++)P.push(mk("AI "+AINM[id%AINM.length],AVAS[id%AVAS.length],"ai",id));
+}
+async function gmShowRoles(){
+  const list=P.map(p=>`<div style="text-align:left;border-bottom:1px dashed var(--hair);padding:4px 0">${p.ava} <b>${p.name}</b> — ${ROLE[p.role].e} ${ROLE[p.role].n}</div>`).join("");
+  window.gmRoles=()=>modal("🎩 Bảng vai — CHỈ QUẢN TRÒ XEM",`<div style="max-height:52vh;overflow:auto">${list}</div>`,["Đóng (giấu bảng vai) 🤫"]);
+  $("rolecard").innerHTML=`🎩 Quản Trò · <button class="btn-sub" style="padding:5px 12px" onclick="gmRoles()">Bảng vai 🤫</button>`;
+  await modal("🤫 Đưa máy ra xa người chơi","Màn hình kế tiếp là <b>bảng vai đầy đủ</b> — chỉ quản trò được xem. Xem xong, bạn đi báo vai bí mật cho từng người (hoặc cho từng người liếc đúng dòng của mình).",["Tôi là quản trò — xem bảng vai"]);
+  await window.gmRoles();
 }
 function renderSnap(m){
   if(P.length!==m.ps.length){
@@ -730,14 +770,21 @@ function onGuestData(conn,raw){
   else if(m.t==="nightm"){nightMode(m.on);}
 }
 async function guestJoin(){
-  await modal("🌐 Vào phòng online",`<input id="gcode" maxlength="5" placeholder="MÃ PHÒNG" style="width:100%;text-transform:uppercase;font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;padding:11px;border:1.5px solid var(--hair);border-radius:12px;background:var(--bg);color:var(--ink)">`,["Kết nối"]);
+  await modal("📲 Vào phòng online",
+    `<input id="gname" maxlength="16" placeholder="Tên của bạn" style="width:100%;font-size:15px;text-align:center;font-family:inherit;padding:11px;border:1.5px solid var(--hair);border-radius:12px;background:var(--bg);color:var(--ink);margin-bottom:9px">
+     <input id="gcode" maxlength="5" placeholder="MÃ PHÒNG" style="width:100%;text-transform:uppercase;font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;padding:11px;border:1.5px solid var(--hair);border-radius:12px;background:var(--bg);color:var(--ink)">`,["Kết nối"]);
   const code=($("gcode").value||"").trim().toUpperCase();
+  const name=(($("gname").value||"").trim()||"Khách").slice(0,16);
   NET.mode="guest"; MODE="online";
   setPhase("🌐 Đang kết nối phòng "+code+"…");
   const peer=new Peer(); NET.peer=peer;
   peer.on("open",()=>{
     const conn=peer.connect("masoi6-"+code,{reliable:true}); NET.host=conn;
-    conn.on("open",()=>setPhase("🌐 Đã vào phòng "+code+" — chờ chủ phòng bắt đầu…"));
+    conn.on("open",()=>{
+      try{conn.send(JSON.stringify({t:"join",name}));}catch(e){}
+      setPhase("🌐 Đã vào phòng "+code+" — chờ chủ phòng bắt đầu…");
+      $("rolecard").innerHTML=`Bạn là <b>${name}</b> · vai sẽ hiện riêng trên máy này khi ván bắt đầu.`;
+    });
     conn.on("data",d=>onGuestData(conn,d));
     conn.on("close",()=>setPhase("📡 Mất kết nối với chủ phòng."));
   });
@@ -754,6 +801,21 @@ $("btn-theme").onclick=()=>applyTheme(document.body.classList.contains("dark")?"
 $("btn-sound").onclick=()=>{soundOn=!soundOn;$("btn-sound").textContent="Âm thanh: "+(soundOn?"Bật":"Tắt");};
 $("btn-speed").onclick=()=>{SPD=SPD===1?0.45:1;$("btn-speed").textContent=SPD===1?"Tốc độ: Thường":"Tốc độ: Nhanh";};
 $("btn-new").onclick=()=>{if(confirm("Bắt đầu ván mới? Ván hiện tại sẽ kết thúc."))location.reload();};
+function rolesHTML(){
+  const team={wolf:["🐺 PHE SÓI","var(--bad)"],vill:["🌾 PHE DÂN","var(--good)"],solo:["🃏 PHE RIÊNG","var(--gold)"]};
+  const order=["wolf","alpha","seer","guard","witch","hunter","elder","cupid","bansoi","vill","fool"];
+  let cur="",h="";
+  order.forEach(k=>{
+    const r=ROLE[k]; if(!r)return;
+    if(r.team!==cur){cur=r.team;h+=`<div style="font-weight:800;letter-spacing:1.5px;font-size:11px;color:${team[cur][1]};margin:10px 0 4px">${team[cur][0]}</div>`;}
+    h+=`<div style="display:flex;gap:10px;align-items:flex-start;border-bottom:1px dashed var(--hair);padding:6px 0;text-align:left">
+      <span style="font-size:24px;line-height:1.2">${r.e}</span>
+      <span style="font-size:12.5px"><b>${r.n}</b><br><span style="color:var(--muted)">${r.d}</span></span></div>`;
+  });
+  return h;
+}
+if($("roleguide"))$("roleguide").innerHTML=rolesHTML();
+$("btn-roles").onclick=()=>modal("📖 Tất cả thân phận trong làng",`<div style="max-height:60vh;overflow:auto">${rolesHTML()}</div>`,["Đóng"]);
 $("btn-hof").onclick=()=>{
   let h=[]; try{h=JSON.parse(localStorage.getItem(HOF_KEY)||"[]");}catch(e){}
   const body=h.length?h.map((e,i)=>`<div style="text-align:left;border-bottom:1px dashed var(--hair);padding:5px 0;font-size:12.5px">${i+1}. ${e.w}<br><span style="font-size:10.5px;color:var(--muted)">${e.n} người · ${e.d} đêm · ${e.date}</span></div>`).join(""):"Chưa có ván nào kết thúc trên máy này. 🐺";
@@ -763,25 +825,19 @@ $("btn-hof").onclick=()=>{
 /* ============ KHỞI ĐỘNG ============ */
 (async function boot(){
   applyTheme(localStorage.getItem("masoi-theme")||"light");
-  const mi=await modal("🐺 MA SÓI — Làng Trăng Mơ","Chơi kiểu gì hôm nay?",
-    ["Chơi trên máy này","🎩 Quản trò bàn thật","Tạo phòng online","Vào phòng online"]);
-  if(mi===3){await guestJoin();return;}
-  if(mi===1){
-    await setupGM();
-  }else if(mi===2){
-    NET.mode="host"; MODE="online";
-    const code=mkCode();
-    NET.peer=new Peer("masoi6-"+code);
-    await setupDigital(true);
-    if(P.some(isRem))await hostLobby(code); else NET.mode=null;
-  }else{
-    MODE="digital";
-    await setupDigital(false);
-  }
+  const mi=await modal("🐺 MA SÓI — Làng Trăng Mơ",
+    `<div style="text-align:left;font-size:12.5px;line-height:1.7">
+     <b>🎩 Bản Quản Trò:</b> chỉ quản trò cầm máy — chọn sĩ số (6–18) & vai đặc biệt, app chia vai, quản trò giữ <b>bảng vai bí mật</b> và nhập kết quả của bàn chơi thật.<br>
+     <b>🌐 Bản Online:</b> mỗi người một máy — vai chỉ hiện trên máy của chính người đó.</div>`,
+    ["🎩 Bản Quản Trò","🌐 Tạo phòng online","📲 Vào phòng online","🤖 Tập chơi với AI"]);
+  if(mi===2){await guestJoin();return;}
+  if(mi===0){await setupGM();}
+  else if(mi===1){await setupOnlineHost();}
+  else{MODE="digital";await setupDigital();}
   buildSeats(); updateUI();
   log(`🌕 Chào mừng đến <b>Làng Trăng Mơ</b>! ${P.length} người nhập cuộc — ${P.filter(isWolfSide).length} Sói ẩn mình đâu đó.`,true);
-  $("rolecard").innerHTML=MODE==="gm"?"🎩 Bạn là <b>Quản Trò</b> — app sẽ dẫn dắt từng bước.":"";
-  await revealRoles();
+  if(MODE==="gm")await gmShowRoles();
+  else await revealRoles();
   gameLoop();
 })();
 </script>
