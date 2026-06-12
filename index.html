@@ -293,6 +293,9 @@ function updateUI(){
 }
 function setPhase(txt){$("phasebar").innerHTML=txt; if(NET.mode==="host")bcast(snapMsg());}
 function nightMode(on){$("village").classList.toggle("night",on);$("moon").textContent=on?"🌙":"🌕";
+  // cả làng "đi ngủ / thức dậy": đêm = Đêm Trăng, ngày = Light (không ghi đè lựa chọn lưu sẵn)
+  document.body.classList.toggle("dark",on);
+  const tb=$("btn-theme"); if(tb)tb.textContent="Giao diện: "+(on?"Đêm Trăng":"Light");
   if(NET.mode==="host")bcast({t:"nightm",on});}
 function confetti(){const e=["🎉","🌟","🐺","✨","🏆"];for(let i=0;i<55;i++){const c=document.createElement("div");c.className="cf";c.textContent=e[i%5];
   c.style.left=Math.random()*100+"vw";c.style.animationDelay=Math.random()*1.1+"s";document.body.appendChild(c);setTimeout(()=>c.remove(),4200);}}
@@ -370,7 +373,7 @@ async function setupDigital(host){
       const kinds=["Người (máy này)","AI"];
       return `<div class="setrow" data-i="${i}" ${i>=8?'style="display:none"':""}>
         <span class="sava" onclick="cycAva(this)">${AVAS[i%AVAS.length]}</span>
-        <input value="${i===0?"Người chơi 1":"AI "+["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc","Bơ","Khế","Chanh","Quýt","Vải","Nhãn"][(i-1+17)%17]}">
+        <input value="${i===0?"Người chơi 1":"Thị "+["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc","Bơ","Khế","Chanh","Quýt","Vải","Nhãn"][(i-1+17)%17]}">
         <select>${kinds.map((k,j)=>`<option ${i===0?(j===0?"selected":""):(j===1?"selected":"")}>${k}</option>`).join("")}</select>
       </div>`;}).join("");
     await modal("♞ Thiết lập ván đấu",
@@ -753,7 +756,7 @@ async function setupOnlineHost(){
   const mk=(name,ava,kind,id)=>({id,name,ava,kind,role:roles[id],alive:true,lover:-1,idol:-1,shield:roles[id]==="elder",mem:kind==="ai"?{susp:{},known:{}}:null});
   P.push(mk(NET.hostNm,NET.hostAva,"local",0));
   joined.forEach((j,k)=>{const id=k+1;P.push(mk(j.name,AVAS[id%AVAS.length],"remote",id));NET.conns[id]=j.conn;});
-  for(let id=joined.length+1;id<NET.total;id++)P.push(mk("AI "+AINM[id%AINM.length],AVAS[id%AVAS.length],"ai",id));
+  for(let id=joined.length+1;id<NET.total;id++)P.push(mk("Thị "+AINM[id%AINM.length],AVAS[id%AVAS.length],"ai",id));
 }
 async function gmShowRoles(){
   const list=P.map(p=>`<div style="text-align:left;border-bottom:1px dashed var(--hair);padding:4px 0">${p.ava} <b>${p.name}</b> — ${ROLE[p.role].e} ${ROLE[p.role].n}</div>`).join("");
