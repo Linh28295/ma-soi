@@ -412,7 +412,7 @@ function aiTalkLines(){
     if(tid!==undefined){
       seerClaim=sp.id; claimT=Number(tid);
       log(`<span class="talk">🔮 <b>${sp.name}</b>: "Tôi là TIÊN TRI! Tôi soi <b>${P[tid].name}</b> — CHÍNH LÀ SÓI!"</span>`,"imp");
-      alive().filter(q=>isAIp(q)&&!PACK(q)&&q!==sp).forEach(q=>{ensureMem(q);q.mem.susp[tid]=(q.mem.susp[tid]||5)+25;});
+      alive().filter(q=>isAIp(q)&&!PACK(q)&&q!==sp).forEach(q=>{ensureMem(q);q.mem.susp[tid]=Math.min((q.mem.susp[tid]||5)+25,45);});
     }
     Object.keys(sp.mem.known).filter(k=>sp.mem.known[k]==="clear"&&P[k]&&P[k].alive).forEach(k=>{
       alive().filter(q=>isAIp(q)&&!PACK(q)&&q!==sp).forEach(q=>{ensureMem(q);q.mem.susp[k]=Math.min(q.mem.susp[k]===undefined?5:q.mem.susp[k],1);});
@@ -851,8 +851,19 @@ $("btn-hof").onclick=()=>{
 };
 
 /* ============ KHỞI ĐỘNG ============ */
+async function showRules(first){
+  const det=document.querySelector(".side details");
+  const html=[...det.children].filter(x=>x.tagName!=="SUMMARY").map(x=>x.outerHTML).join("");
+  await modal("📜 Cách chơi Ma Sói — đọc trước khi vào làng",
+    `<div style="max-height:58vh;overflow-y:auto;text-align:left;padding-right:6px">${html}</div>`,
+    [first?"Đã hiểu — vào làng 🐺":"Đóng"]);
+}
 (async function boot(){
   applyTheme(localStorage.getItem("masoi-theme")||"light");
+  if(!localStorage.getItem("masoi-rules-seen")){
+    await showRules(true);
+    try{localStorage.setItem("masoi-rules-seen","1");}catch(e){}
+  }
   const mi=await modal("🐺 MA SÓI — Làng Nanh Sữa",
     `<div style="text-align:left;font-size:12.5px;line-height:1.7">
      <b>🎩 Bản Quản Trò:</b> chỉ quản trò cầm máy — chọn sĩ số (6–18) & vai đặc biệt, app chia vai, quản trò giữ <b>bảng vai bí mật</b> và nhập kết quả của bàn chơi thật.<br>
