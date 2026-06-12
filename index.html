@@ -358,15 +358,15 @@ async function setupGM(){
 }
 async function setupDigital(host){
   while(true){
-    const rows=Array.from({length:12},(_,i)=>{
+    const rows=Array.from({length:18},(_,i)=>{
       const kinds=["Người (máy này)","AI"];
       return `<div class="setrow" data-i="${i}" ${i>=8?'style="display:none"':""}>
         <span class="sava" onclick="cycAva(this)">${AVAS[i%AVAS.length]}</span>
-        <input value="${i===0?"Người chơi 1":"AI "+["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc"][(i-1+11)%11]}">
+        <input value="${i===0?"Người chơi 1":"AI "+["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc","Bơ","Khế","Chanh","Quýt","Vải","Nhãn"][(i-1+17)%17]}">
         <select>${kinds.map((k,j)=>`<option ${i===0?(j===0?"selected":""):(j===1?"selected":"")}>${k}</option>`).join("")}</select>
       </div>`;}).join("");
     await modal("♞ Thiết lập ván đấu",
-      `<div style="text-align:left"><b>Sĩ số:</b> <select id="dg-n">${[6,7,8,9,10,11,12].map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
+      `<div style="text-align:left"><b>Sĩ số:</b> <select id="dg-n">${Array.from({length:13},(_,i)=>i+6).map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
       <span style="font-size:11px;color:var(--muted)">(đổi xong bấm "Cập nhật")</span> <button class="btn-sub" style="padding:4px 12px" onclick="document.querySelectorAll('.setrow').forEach((r,i)=>r.style.display=i<Number(document.getElementById('dg-n').value)?'flex':'none')">Cập nhật</button></div>
       <div style="margin-top:8px">${rows}</div>${cfgBoxes(defaultCfg(8))}
       <div style="font-size:11px;color:var(--muted);margin-top:6px">Bấm vào hình để đổi đại diện. Nhiều người thật chung máy → app sẽ nhắc chuyền máy khi cần giữ bí mật.</div>`,
@@ -716,7 +716,7 @@ async function setupOnlineHost(){
   while(true){
     await modal("🌐 Tạo phòng — cấu hình ván",
       `<div class="setrow"><span class="sava" onclick="cycAva(this)">${AVAS[0]}</span><input id="hostnm" value="Chủ phòng" placeholder="Tên của bạn"></div>
-      <div style="text-align:left;margin-top:6px"><b>Sĩ số (gồm bạn):</b> <select id="on-n">${Array.from({length:11},(_,i)=>i+6).map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
+      <div style="text-align:left;margin-top:6px"><b>Sĩ số (gồm bạn):</b> <select id="on-n">${Array.from({length:13},(_,i)=>i+6).map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
       <span style="font-size:11px;color:var(--muted)">— thiếu người thật thì AI lấp chỗ</span></div>
       ${cfgBoxes(defaultCfg(8))}`,["Tạo phòng"]);
     const n=Number($("on-n").value), cfg=readCfg(), nm=($("hostnm").value||"").trim()||"Chủ phòng";
