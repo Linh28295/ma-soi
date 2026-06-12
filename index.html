@@ -559,9 +559,22 @@ async function nightPhase(){
     setPhase("🐺 Bầy Sói mở mắt, đảo quanh làng…");
     const pool=alive().filter(q=>!PACK(q));
     if(pool.length){
-      const rep=ws.find(w=>!isAIp(w));
-      if(rep)victim=await actPick(rep,`🐺 Bầy Sói (${ws.map(w=>w.name).join(", ")})`,"Bầy thống nhất CẮN ai đêm nay?",pool,"Không cắn ai");
-      else victim=aiWolfPick(pool);
+      const humansW=ws.filter(w=>!isAIp(w));
+      if(!humansW.length)victim=aiWolfPick(pool);
+      else if(MODE==="gm"){
+        victim=await actPick(humansW[0],`🐺 Bầy Sói (${ws.map(w=>w.name).join(", ")})`,"Bầy ngoài bàn thống nhất CẮN ai? (quản trò nhập)",pool,"Không cắn ai");
+      }else{
+        const votes={};
+        for(const w of humansW){
+          const t=await actPick(w,`🐺 Sói ${w.name} — bầy: ${ws.map(x=>x.name).join(", ")}`,"Bạn đề xuất cắn ai? (bầy biểu quyết, nhiều phiếu nhất bị cắn)",pool,"Theo ý bầy");
+          if(t>-1)votes[t]=(votes[t]||0)+1;
+        }
+        ws.filter(w=>isAIp(w)).forEach(()=>{const t=aiWolfPick(pool);votes[t]=(votes[t]||0)+1;});
+        const mx=Math.max(0,...Object.values(votes));
+        const top=Object.keys(votes).filter(k=>votes[k]===mx);
+        victim=mx>0?Number(top[rnd(top.length)]):aiWolfPick(pool);
+        if(top.length>1&&mx>0)log("🐺 Bầy sói gầm gừ bất đồng trong bụi rậm… rồi cũng chốt được con mồi.");
+      }
     }
   }
   // Tiên Tri thật + Thầy Bói Mù (trải nghiệm giống hệt nhau)
