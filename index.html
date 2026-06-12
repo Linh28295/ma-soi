@@ -281,11 +281,13 @@ function updateUI(){
     s.querySelector(".rl").innerHTML=gameOver?`${ROLE[p.role].e} ${ROLE[p.role].n}`:(!p.alive?"⚰️":"");
   });
   const pl=$("plist"); if(pl){pl.innerHTML="";
+    pl.style.gridTemplateColumns=gameOver?"1fr":"";
     P.forEach(p=>{
       const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
       let badge=isAIp(p)?" <span style='font-size:9.5px;color:var(--muted)'>AI</span>":(isRem(p)?" 🌐":"");
+      const pr=gameOver?`<span style="font-size:17px">${ROLE[p.role].e}</span> <span style="font-size:11.5px;color:var(--muted)">${ROLE[p.role].n}</span>`:(p.alive?"":"⚰️");
       d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}${badge}</span>
-        <span class="pr" title="${gameOver?ROLE[p.role].n:(p.alive?"còn sống":"đã mất")}" style="${gameOver?"font-size:19px":""}">${gameOver?ROLE[p.role].e:(p.alive?"":"⚰️")}</span>`;
+        <span class="pr" style="display:flex;align-items:center;gap:4px">${pr}</span>`;
       pl.appendChild(d);
     });}
   if(NET.mode==="host")bcast(snapMsg());
@@ -777,9 +779,12 @@ function renderSnap(m){
     s.querySelector(".rl").innerHTML=(m.ps[i].role&&!p.alive)?`${ROLE[m.ps[i].role].e} ${ROLE[m.ps[i].role].n}`:(!p.alive?"⚰️":"");
   });
   const pl=$("plist"); pl.innerHTML="";
+  const over=m.ps.some(q=>q.role);
+  pl.style.gridTemplateColumns=over?"1fr":"";
   P.forEach((p,i)=>{
     const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
-    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr" title="${m.ps[i].role?ROLE[m.ps[i].role].n:""}" style="${m.ps[i].role?"font-size:19px":""}">${m.ps[i].role?ROLE[m.ps[i].role].e:(p.alive?"":"⚰️")}</span>`;
+    const pr=m.ps[i].role?`<span style="font-size:17px">${ROLE[m.ps[i].role].e}</span> <span style="font-size:11.5px;color:var(--muted)">${ROLE[m.ps[i].role].n}</span>`:(p.alive?"":"⚰️");
+    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr" style="display:flex;align-items:center;gap:4px">${pr}</span>`;
     pl.appendChild(d);
   });
 }
