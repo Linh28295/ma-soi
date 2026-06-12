@@ -1,0 +1,789 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ma Sói 🐺</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=Noto+Serif:wght@700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.2/peerjs.min.js"></script>
+<style>
+  :root{--bg:#f5f1fa; --panel:#fffdfd; --ink:#4a3d55; --muted:#9a8aa8; --hair:#e8e0ef;
+    --accent:#9b6b9e; --gold:#c9a04e; --good:#5f9e6e; --bad:#c0697a; --moon:#f2dfa7;}
+  body.dark{--bg:#221b2e; --panel:#2d2440; --ink:#efe9f6; --muted:#9d8fb3; --hair:#43375c;
+    --accent:#c79bd4; --gold:#e0c279; --good:#84c294; --bad:#e09aa8; --moon:#f6e7b5;}
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{font-family:'Be Vietnam Pro','Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--ink);
+    line-height:1.5; letter-spacing:.1px; overflow:hidden; transition:background .4s;}
+  #app{height:100%; display:flex; flex-direction:column; padding:14px 18px;}
+  header{display:flex; align-items:center; gap:14px; padding-bottom:10px; border-bottom:1px solid var(--hair);}
+  .logo{font-size:30px; filter:drop-shadow(0 2px 3px rgba(0,0,0,.2));}
+  h1{font-family:'Noto Serif',serif; font-weight:900; font-size:24px; color:var(--accent); letter-spacing:1px; line-height:1.35;}
+  .sub{font-size:10.5px; color:var(--muted); letter-spacing:2px; font-weight:600;}
+  .hbtns{margin-left:auto; display:flex; gap:8px; flex-wrap:wrap;}
+  .btn-ghost{background:var(--panel); border:1px solid var(--hair); color:var(--muted); font-family:inherit;
+    font-size:10.5px; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:8px 14px;
+    border-radius:999px; cursor:pointer;}
+  .btn-ghost:hover{color:var(--accent); border-color:var(--accent);}
+  .stage{flex:1; display:flex; gap:16px; padding-top:14px; min-height:0;}
+  /* ----- LÀNG ----- */
+  .board-holder{flex:none; height:100%; aspect-ratio:1.04; max-width:calc(100vw - 296px); position:relative;
+    background:radial-gradient(ellipse at 50% 32%, #efe6f7 0%, #e4d6f0 55%, #d9c8e8 100%);
+    border-radius:24px; overflow:hidden; box-shadow:inset 0 0 50px rgba(120,90,160,.18); transition:background .8s;}
+  body.dark .board-holder{background:radial-gradient(ellipse at 50% 32%, #322749 0%, #271e3a 55%, #1d1630 100%);}
+  .board-holder.night{background:radial-gradient(ellipse at 50% 28%, #3a2e57 0%, #2b2144 55%, #1f1834 100%);}
+  .board-holder.night .seat{box-shadow:0 4px 14px rgba(0,0,0,.35);}
+  #moon{position:absolute; left:50%; top:50%; transform:translate(-50%,-58%); font-size:min(9vh,84px); text-align:center;
+    filter:drop-shadow(0 0 26px rgba(242,223,167,.65)); transition:all .8s; line-height:1;}
+  #moonlb{position:absolute; left:50%; top:50%; transform:translate(-50%,42%); font-family:'Noto Serif',serif;
+    font-weight:900; letter-spacing:3px; font-size:min(2vh,16px); color:var(--accent); text-align:center; white-space:nowrap;}
+  .board-holder.night #moonlb{color:var(--moon);}
+  .seat{position:absolute; width:min(13.5vh,118px); transform:translate(-50%,-50%); background:var(--panel);
+    border-radius:18px; padding:8px 6px 7px; text-align:center; box-shadow:0 4px 10px rgba(120,90,160,.22);
+    border:2.5px solid transparent; transition:border .25s, opacity .4s, filter .4s;}
+  .seat .ava{font-size:min(4.6vh,40px); line-height:1.15; filter:drop-shadow(0 2px 2px rgba(0,0,0,.12));}
+  .seat .nm{font-size:min(1.55vh,12.5px); font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .seat .rl{font-size:min(1.4vh,11px); color:var(--muted); min-height:1.3em;}
+  .seat.dead{opacity:.62; filter:grayscale(.85);}
+  .seat.dead .ava::after{content:" 💀";}
+  .seat.turnglow{border-color:var(--gold); box-shadow:0 0 0 4px rgba(201,160,78,.25), 0 4px 12px rgba(0,0,0,.2);}
+  .seat .tag{position:absolute; top:-10px; right:-6px; background:var(--accent); color:#fff; border-radius:999px;
+    font-size:9.5px; font-weight:800; padding:2px 8px; letter-spacing:.5px; box-shadow:0 2px 5px rgba(0,0,0,.25);}
+  /* ----- SIDE ----- */
+  .side{flex:1; min-width:230px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; padding-right:3px;}
+  @media (min-width:1280px){
+    .side{display:grid; grid-template-columns:1fr 1.15fr; grid-auto-rows:min-content; align-content:start; align-items:start;}
+    .side .panel:nth-child(1){grid-column:1; grid-row:1;}
+    .side .panel:nth-child(2){grid-column:1; grid-row:2;}
+    .side .panel:nth-child(3){grid-column:2; grid-row:1 / span 2; height:100%; display:flex; flex-direction:column; min-height:0;}
+    .side .panel:nth-child(3) #log{flex:1; max-height:none; min-height:0; height:auto;}
+    .side .panel:nth-child(4){grid-column:1 / -1; grid-row:3;}
+  }
+  .panel{background:var(--panel); border:1px solid var(--hair); border-radius:18px; padding:14px 16px;
+    box-shadow:0 3px 10px rgba(120,90,160,.08);}
+  .panel h3{font-size:11px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold); font-weight:800;
+    border-bottom:1px solid var(--hair); padding-bottom:7px; margin-bottom:9px;}
+  #phasebar{text-align:center; font-family:'Noto Serif',serif; font-weight:900; font-size:17px; color:var(--accent);
+    line-height:1.4; min-height:2.6em; display:flex; align-items:center; justify-content:center;}
+  #rolecard{margin-top:8px; text-align:center; font-size:12px; color:var(--muted); min-height:1.2em;}
+  #rolecard b{color:var(--accent);}
+  .pcard{display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:12px; border:1.5px solid var(--hair); margin-bottom:6px; font-size:12.5px;}
+  .pcard.dead{opacity:.55;}
+  .pcard .pa{font-size:20px;}
+  .pcard .pr{margin-left:auto; font-size:11px; color:var(--muted); text-align:right;}
+  #log{overflow-y:auto; background:rgba(155,107,158,.06); border:1px solid var(--hair); border-radius:14px;
+    padding:9px 12px; font-size:12.5px; line-height:1.7; height:24vh;}
+  body.dark #log{background:rgba(0,0,0,.2);}
+  #log div{padding:2.5px 0; border-bottom:1px dashed var(--hair);}
+  #log .imp{color:var(--accent); font-weight:700;}
+  #log .talk{color:var(--ink);}
+  #log .talk i{color:var(--muted);}
+  details{font-size:12.5px;} summary{cursor:pointer; font-weight:700; color:var(--accent); font-size:13px;}
+  details p{margin:7px 0; line-height:1.65;}
+  /* ----- MODAL ----- */
+  #overlay{position:fixed; inset:0; background:rgba(40,28,58,.45); display:none; align-items:center; justify-content:center; z-index:50; backdrop-filter:blur(2px);}
+  #modal{background:var(--panel); border-radius:22px; border-top:4px solid var(--accent); padding:26px 30px;
+    max-width:560px; width:92vw; max-height:86vh; overflow-y:auto; box-shadow:0 18px 60px rgba(0,0,0,.35); text-align:center;}
+  #mtitle{font-family:'Noto Serif',serif; font-weight:900; font-size:20px; color:var(--accent); margin-bottom:10px; line-height:1.4;}
+  .mbody{font-size:13.5px; line-height:1.65; margin-bottom:16px;}
+  .mbtns{display:flex; flex-wrap:wrap; gap:9px; justify-content:center;}
+  .btn-main{background:var(--accent); color:#fff; border:none; font-family:inherit; font-weight:800; font-size:12px;
+    letter-spacing:1.5px; text-transform:uppercase; padding:11px 22px; border-radius:999px; cursor:pointer; box-shadow:0 3px 8px rgba(0,0,0,.18);}
+  .btn-main:hover{filter:brightness(1.08);}
+  .btn-main:disabled{opacity:.45; cursor:default;}
+  .btn-sub{background:var(--panel); border:1.5px solid var(--accent); color:var(--accent); font-family:inherit;
+    font-weight:700; font-size:12px; letter-spacing:1px; text-transform:uppercase; padding:10px 20px; border-radius:999px; cursor:pointer;}
+  .btn-sub:hover{background:var(--accent); color:#fff;}
+  .pickgrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:8px; margin:6px 0 2px;}
+  .pickgrid .btn-sub{display:flex; flex-direction:column; gap:2px; align-items:center; padding:10px 6px; text-transform:none; letter-spacing:.2px;}
+  .pickgrid .btn-sub .pe{font-size:24px;}
+  .rolebig{font-size:54px; line-height:1.2; filter:drop-shadow(0 3px 5px rgba(0,0,0,.18));}
+  .setrow{display:flex; gap:8px; margin-bottom:8px; align-items:center;}
+  .setrow .sava{font-size:22px; cursor:pointer; width:36px; text-align:center;}
+  .setrow input{flex:1; font-family:inherit; font-size:13px; padding:9px 12px; border:1.5px solid var(--hair); border-radius:10px; background:var(--bg); color:var(--ink);}
+  .setrow select{font-family:inherit; font-size:12px; padding:9px 8px; border:1.5px solid var(--hair); border-radius:10px; background:var(--bg); color:var(--ink);}
+  .cf{position:fixed; font-size:24px; z-index:99; pointer-events:none; animation:fall 2.8s linear forwards;}
+  @keyframes fall{from{transform:translateY(-8vh) rotate(0)}to{transform:translateY(108vh) rotate(540deg)}}
+  @media (max-width:900px){
+    body{overflow:auto;} #app{height:auto;}
+    .stage{flex-direction:column;}
+    .board-holder{height:auto; width:100%; max-width:none; aspect-ratio:1;}
+    .side{max-width:none; overflow:visible;}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="logo">🐺</div>
+    <div><h1>MA SÓI</h1><div class="sub">LÀNG TRĂNG MƠ · 6–12 NGƯỜI · ONLINE</div></div>
+    <div class="hbtns">
+      <button id="btn-theme" class="btn-ghost">Giao diện: Light</button>
+      <button id="btn-hof" class="btn-ghost">Bảng vàng</button>
+      <button id="btn-sound" class="btn-ghost">Âm thanh: Bật</button>
+      <button id="btn-speed" class="btn-ghost">Tốc độ: Thường</button>
+      <button id="btn-new" class="btn-ghost">Ván mới</button>
+    </div>
+  </header>
+  <div class="stage">
+    <div class="board-holder" id="village">
+      <div id="moon">🌕</div><div id="moonlb">LÀNG TRĂNG MƠ</div>
+    </div>
+    <div class="side">
+      <div class="panel"><div id="phasebar">Chào mừng đến Làng Trăng Mơ…</div><div id="rolecard"></div></div>
+      <div class="panel"><h3>Dân làng</h3><div id="plist"></div></div>
+      <div class="panel"><h3>Diễn biến</h3><div id="log"></div></div>
+      <div class="panel">
+        <details>
+          <summary>📜 Cách chơi</summary>
+          <p><b>🎯 Mục tiêu:</b> làng chia 2 phe. <b>Phe Sói</b> 🐺 thắng khi số Sói ≥ số người còn lại. <b>Phe Dân</b> thắng khi treo cổ hết Sói.</p>
+          <p><b>🌙 Ban đêm:</b> cả làng nhắm mắt. Lần lượt: 🛡️ <b>Bảo Vệ</b> chọn người che chắn (không lặp lại đêm liền trước) → 🐺 <b>Bầy Sói</b> thống nhất cắn 1 người → 🔮 <b>Tiên Tri</b> soi 1 người là Sói hay không → 🧪 <b>Phù Thủy</b> thấy nạn nhân, có 1 bình cứu và 1 bình độc (mỗi bình dùng đúng 1 lần cả ván).</p>
+          <p><b>☀️ Ban ngày:</b> công bố người chết (lộ vai). Cả làng thảo luận rồi <b>bỏ phiếu treo cổ</b> — nhiều phiếu nhất bị treo (hòa phiếu = không ai bị treo). 🏹 <b>Thợ Săn</b> khi chết được kéo theo 1 người.</p>
+          <p><b>🃏 Vai trò theo sĩ số:</b> 6–7 người: 2 Sói + Tiên Tri + Bảo Vệ + Dân · 8–9: thêm Phù Thủy · 10–12: thêm Thợ Săn và Sói thứ 3.</p>
+          <p><b>🙈 Giữ bí mật vai:</b> chơi chung một máy thì máy sẽ nhắc "chuyền máy cho ai" trước mỗi hành động kín — người khác nhớ quay đi nhé.</p>
+          <p><b>🌐 Chơi online:</b> một người "Tạo phòng" lấy mã 5 ký tự, bạn bè mở link này chọn "Vào phòng". Vai trò gửi riêng cho từng người. Rớt mạng AI đánh thay.</p>
+        </details>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="overlay"><div id="modal"><h2 id="mtitle"></h2><div class="mbody" id="mbody"></div><div class="mbtns" id="mbtns"></div></div></div>
+<script>
+"use strict";
+/* ============ TIỆN ÍCH ============ */
+const $=id=>document.getElementById(id);
+let SPD=1, soundOn=true;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms*SPD));
+const rnd=n=>Math.floor(Math.random()*n);
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;};
+let AC=null;
+function beep(f,d,t){if(!soundOn)return;try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();
+  const o=AC.createOscillator(),g=AC.createGain();o.type=t||"sine";o.frequency.value=f;
+  g.gain.setValueAtTime(.12,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);
+  o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d);}catch(e){}}
+const sfx={night:()=>beep(196,.5),day:()=>beep(523,.3),death:()=>{beep(147,.4,"triangle");setTimeout(()=>beep(110,.5,"triangle"),160);},
+  vote:()=>beep(440,.12),win:()=>{[523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.3),i*140));}};
+
+/* ============ VAI TRÒ ============ */
+const ROLE={
+  wolf:{n:"Ma Sói",e:"🐺",team:"wolf",d:"Mỗi đêm cùng bầy chọn cắn 1 người. Ban ngày giả làm dân lành."},
+  seer:{n:"Tiên Tri",e:"🔮",team:"vill",d:"Mỗi đêm soi 1 người: là Sói hay không."},
+  guard:{n:"Bảo Vệ",e:"🛡️",team:"vill",d:"Mỗi đêm che chắn 1 người khỏi Sói (không lặp người vừa che đêm trước)."},
+  witch:{n:"Phù Thủy",e:"🧪",team:"vill",d:"Có 1 bình cứu + 1 bình độc, mỗi bình dùng đúng 1 lần cả ván."},
+  hunter:{n:"Thợ Săn",e:"🏹",team:"vill",d:"Khi chết, nổ phát súng cuối kéo theo 1 người."},
+  vill:{n:"Dân Làng",e:"🌾",team:"vill",d:"Quan sát, suy luận, bỏ phiếu — vũ khí là lá phiếu."}
+};
+const AVAS=["👩‍🌾","👨‍🍳","🧑‍🏫","👵","🧒","👮‍♀️","🤠","👩‍⚕️","🧑‍🎨","👨‍🔧","👰","🧓"];
+function roleSetFor(n){
+  const r=["seer","guard"];
+  r.push("wolf","wolf"); if(n>=10)r.push("wolf");
+  if(n>=8)r.push("witch");
+  if(n>=10)r.push("hunter");
+  while(r.length<n)r.push("vill");
+  return shuffle(r);
+}
+
+/* ============ TRẠNG THÁI ============ */
+let P=[], dayNo=0, gameOver=false, lastGuard=-1, healLeft=true, poisonLeft=true, seerClaim=-1, turnGlow=-1;
+const HOF_KEY="masoi-hof";
+const isAIp=p=>p.kind==="ai", isLoc=p=>p.kind==="local", isRem=p=>p.kind==="remote";
+const alive=()=>P.filter(p=>p.alive);
+const wolvesAlive=()=>alive().filter(p=>p.role==="wolf");
+const humansLoc=()=>P.filter(p=>isLoc(p)).length;
+
+/* ============ MẠNG (PeerJS, host giữ luật) ============ */
+const NET={mode:null, peer:null, host:null, conns:{}, pending:{}, seq:0, myId:null, myRole:null};
+const CODE_CH="ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+const mkCode=()=>Array.from({length:5},()=>CODE_CH[rnd(CODE_CH.length)]).join("");
+function bcast(m){if(NET.mode!=="host")return;const s=JSON.stringify(m);Object.values(NET.conns).forEach(c=>{try{c.send(s);}catch(e){}});}
+function sendTo(pid,m){if(NET.mode!=="host")return;const c=NET.conns[pid];if(c){try{c.send(JSON.stringify(m));}catch(e){}}}
+function snapMsg(){return {t:"snap",day:dayNo,ph:$("phasebar").textContent,glow:turnGlow,
+  ps:P.map(p=>({name:p.name,ava:p.ava,alive:p.alive,kind:p.kind,role:(!p.alive||gameOver)?p.role:null})),
+  log:$("log").innerHTML.split("</div>").slice(0,80).join("</div>")+"</div>"};}
+function remoteAsk(p,title,body,btns){
+  return new Promise(res=>{
+    const seq=++NET.seq; NET.pending[seq]=res;
+    sendTo(p.id,{t:"ask",seq,title,body,btns});
+    setTimeout(()=>{if(NET.pending[seq]){delete NET.pending[seq];res(-1);}},90000);
+  });
+}
+function onGuestDrop(pid){
+  const p=P.find(q=>q.id===pid); if(!p)return;
+  p.kind="ai"; ensureMem(p);
+  log(`📡 <b>${p.name}</b> mất kết nối — AI chơi thay.`, "imp"); updateUI();
+}
+
+/* ============ MODAL ============ */
+let modalBusy=Promise.resolve();
+function modal(title,body,btns){
+  const run=()=>new Promise(res=>{
+    $("mtitle").innerHTML=title; $("mbody").innerHTML=body;
+    const mb=$("mbtns"); mb.innerHTML="";
+    btns.forEach((b,i)=>{
+      const el=document.createElement("button");
+      el.className=i===0?"btn-main":"btn-sub"; el.innerHTML=b;
+      el.onclick=()=>{$("overlay").style.display="none"; res(i);};
+      mb.appendChild(el);
+    });
+    $("overlay").style.display="flex";
+  });
+  const next=modalBusy.then(run); modalBusy=next.catch(()=>{}); return next;
+}
+function pickGrid(list){ // list of {e,label} -> html grid handled by modal btns instead
+  return list.map(x=>`<span class="pe">${x.e}</span>${x.label}`);
+}
+async function decide(p,title,body,btns){
+  if(isRem(p))return await remoteAsk(p,title,body,btns);
+  if(isLoc(p)&&humansLoc()>1){
+    await modal(`🤫 Chuyền máy cho ${p.name}`,`Người khác quay mặt đi nhé. <b>${p.name}</b> sẵn sàng thì bấm nút.`,[`Tôi là ${p.name}`]);
+  }
+  return await modal(title,body,btns);
+}
+function privNotice(p,title,body){ // thông tin kín cho 1 người
+  if(isRem(p)){sendTo(p.id,{t:"priv",title,body});return Promise.resolve(0);}
+  if(isAIp(p))return Promise.resolve(0);
+  return modal(title,body,["Đã rõ, giấu kín 🤫"]);
+}
+
+/* ============ LOG & UI ============ */
+function log(html,cls){
+  const d=document.createElement("div"); if(cls)d.className=cls===true?"imp":cls;
+  d.innerHTML=html; $("log").prepend(d);
+}
+function seatPos(i,n){
+  const a=-Math.PI/2 + i*(2*Math.PI/n);
+  return [50+40*Math.cos(a), 50+38.5*Math.sin(a)];
+}
+function buildSeats(){
+  document.querySelectorAll(".seat").forEach(s=>s.remove());
+  P.forEach((p,i)=>{
+    const s=document.createElement("div"); s.className="seat"; s.id="seat"+p.id;
+    const [x,y]=seatPos(i,P.length);
+    s.style.left=x+"%"; s.style.top=y+"%";
+    s.innerHTML=`<div class="ava">${p.ava}</div><div class="nm">${p.name}</div><div class="rl"></div>`;
+    $("village").appendChild(s);
+  });
+}
+function updateUI(){
+  P.forEach(p=>{
+    const s=$("seat"+p.id); if(!s)return;
+    s.classList.toggle("dead",!p.alive);
+    s.classList.toggle("turnglow",p.id===turnGlow);
+    s.querySelector(".rl").innerHTML=(!p.alive||gameOver)?`${ROLE[p.role].e} ${ROLE[p.role].n}`:"";
+  });
+  const pl=$("plist"); if(pl){pl.innerHTML="";
+    P.forEach(p=>{
+      const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
+      let badge=isAIp(p)?" <span style='font-size:9.5px;color:var(--muted)'>AI</span>":(isRem(p)?" 🌐":"");
+      d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}${badge}</span>
+        <span class="pr">${p.alive?"còn sống":ROLE[p.role].e+" "+ROLE[p.role].n}</span>`;
+      pl.appendChild(d);
+    });}
+  if(NET.mode==="host")bcast(snapMsg());
+}
+function setPhase(txt){$("phasebar").innerHTML=txt; if(NET.mode==="host")bcast(snapMsg());}
+function nightMode(on){$("village").classList.toggle("night",on);$("moon").textContent=on?"🌙":"🌕";
+  if(NET.mode==="host")bcast({t:"nightm",on});}
+function confetti(){const e=["🎉","🌟","🐺","✨","🏆"];for(let i=0;i<55;i++){const c=document.createElement("div");c.className="cf";c.textContent=e[i%5];
+  c.style.left=Math.random()*100+"vw";c.style.animationDelay=Math.random()*1.1+"s";document.body.appendChild(c);setTimeout(()=>c.remove(),4200);}}
+
+/* ============ VAI PHỨC TẠP (mở rộng) ============ */
+Object.assign(ROLE,{
+  alpha:{n:"Sói Trùm",e:"👑",team:"wolf",d:"Sói đầu đàn ranh ma — Tiên Tri soi sẽ thấy KHÔNG phải Sói."},
+  cupid:{n:"Cupid",e:"💘",team:"vill",d:"Đêm đầu ghép 2 người thành Tình Nhân: một người chết, người kia chết theo. Nếu đôi khác phe, họ thành phe thứ ba — thắng khi là 2 người cuối cùng."},
+  fool:{n:"Thằng Ngốc",e:"🤡",team:"solo",d:"Mơ ước cả đời là… bị treo cổ. Nếu làng treo nhầm Ngốc — Ngốc THẮNG một mình, ván kết thúc."},
+  elder:{n:"Già Làng",e:"🧓",team:"vill",d:"Da dày sương gió — chịu được nhát cắn ĐẦU TIÊN của Sói (độc dược và treo cổ vẫn chết)."},
+  bansoi:{n:"Bán Sói",e:"🌗",team:"vill",d:"Đêm đầu chọn một thần tượng. Ngày nào thần tượng chết — Bán Sói hoá thành Ma Sói thật."}
+});
+let lovers=[], loversCross=false, foolWinner=-1, MODE="digital"; // digital | gm | online
+function defaultCfg(n){
+  return {wolves:Math.min(4,Math.max(1,Math.round(n/4))), alpha:n>=9, witch:n>=8, hunter:n>=8,
+    cupid:n>=10, fool:n>=10, elder:n>=12, bansoi:n>=12};
+}
+function buildRoles(n,cfg){
+  const r=[];
+  for(let i=0;i<cfg.wolves;i++)r.push(i===0&&cfg.alpha?"alpha":"wolf");
+  r.push("seer","guard");
+  if(cfg.witch)r.push("witch"); if(cfg.hunter)r.push("hunter");
+  if(cfg.cupid)r.push("cupid"); if(cfg.fool)r.push("fool");
+  if(cfg.elder)r.push("elder"); if(cfg.bansoi)r.push("bansoi");
+  while(r.length<n)r.push("vill");
+  return r.length>n?null:shuffle(r);
+}
+const isWolfSide=p=>ROLE[p.role].team==="wolf";
+
+/* ============ MÀN HÌNH THIẾT LẬP ============ */
+window.cycAva=el=>{const i=(AVAS.indexOf(el.textContent)+1)%AVAS.length; el.textContent=AVAS[i];};
+function cfgBoxes(cfg){
+  const items=[["alpha","👑 Sói Trùm"],["witch","🧪 Phù Thủy"],["hunter","🏹 Thợ Săn"],["cupid","💘 Cupid"],["fool","🤡 Thằng Ngốc"],["elder","🧓 Già Làng"],["bansoi","🌗 Bán Sói"]];
+  return `<div style="text-align:left;margin:8px 0"><b>Số Sói:</b>
+    <select id="cf-wolves">${[1,2,3,4].map(x=>`<option ${x===cfg.wolves?"selected":""}>${x}</option>`).join("")}</select>
+    &nbsp;<span style="font-size:11px;color:var(--muted)">(Sói Trùm tính vào số Sói)</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;text-align:left;font-size:13px">
+    ${items.map(([k,l])=>`<label><input type="checkbox" id="cf-${k}" ${cfg[k]?"checked":""}> ${l}</label>`).join("")}
+    </div><div style="font-size:11px;color:var(--muted);margin-top:7px;text-align:left">Luôn có: 🔮 Tiên Tri · 🛡️ Bảo Vệ · 🌾 Dân Làng (phần còn lại)</div>`;
+}
+function readCfg(){
+  const cfg={wolves:Number($("cf-wolves").value)};
+  ["alpha","witch","hunter","cupid","fool","elder","bansoi"].forEach(k=>cfg[k]=$("cf-"+k).checked);
+  return cfg;
+}
+async function setupGM(){
+  while(true){
+    const n0=12;
+    await modal("🎩 Chế độ Quản Trò — bàn chơi thật",
+      `<div style="text-align:left;font-size:12.5px;color:var(--muted);margin-bottom:8px">Người thật ngồi chơi ngoài đời. App chia vai, dẫn dắt đêm/ngày — bạn (quản trò) nhập kết quả, app lo phần còn lại: máu, bình thuốc, tình nhân, điều kiện thắng.</div>
+      <b>Tên người chơi (mỗi dòng một tên, 6–18 người):</b>
+      <textarea id="gmnames" rows="8" style="width:100%;font-family:inherit;font-size:13px;padding:9px;border:1.5px solid var(--hair);border-radius:10px;background:var(--bg);color:var(--ink);margin:6px 0"></textarea>
+      ${cfgBoxes(defaultCfg(n0))}`,["Chia vai & bắt đầu"]);
+    const names=[...new Set($("gmnames").value.split("\n").map(x=>x.trim()).filter(Boolean))];
+    const cfg=readCfg();
+    if(names.length<6||names.length>18){await modal("⚠️ Sĩ số chưa hợp lệ","Cần 6–18 người chơi (mỗi dòng một tên, không trùng).",["Sửa lại"]);continue;}
+    const roles=buildRoles(names.length,cfg);
+    if(!roles){await modal("⚠️ Vai nhiều hơn người","Số vai đặc biệt + Sói đang vượt quá sĩ số. Bỏ bớt vai hoặc thêm người.",["Sửa lại"]);continue;}
+    MODE="gm";
+    P=names.map((nm,i)=>({id:i,name:nm,ava:AVAS[i%AVAS.length],kind:"manual",role:roles[i],alive:true,lover:-1,idol:-1,shield:roles[i]==="elder",mem:null}));
+    return;
+  }
+}
+async function setupDigital(host){
+  while(true){
+    const rows=Array.from({length:12},(_,i)=>{
+      const kinds=host?["Người (máy này)","AI","Bạn online"]:["Người (máy này)","AI"];
+      return `<div class="setrow" data-i="${i}" ${i>=8?'style="display:none"':""}>
+        <span class="sava" onclick="cycAva(this)">${AVAS[i%AVAS.length]}</span>
+        <input value="${i===0?"Người chơi 1":"AI "+["Mận","Ổi","Táo","Xoài","Na","Mít","Cam","Dâu","Me","Sim","Cóc"][(i-1+11)%11]}">
+        <select>${kinds.map((k,j)=>`<option ${i===0?(j===0?"selected":""):(j===1?"selected":"")}>${k}</option>`).join("")}</select>
+      </div>`;}).join("");
+    await modal("♞ Thiết lập ván đấu",
+      `<div style="text-align:left"><b>Sĩ số:</b> <select id="dg-n">${[6,7,8,9,10,11,12].map(x=>`<option ${x===8?"selected":""}>${x}</option>`).join("")}</select>
+      <span style="font-size:11px;color:var(--muted)">(đổi xong bấm "Cập nhật")</span> <button class="btn-sub" style="padding:4px 12px" onclick="document.querySelectorAll('.setrow').forEach((r,i)=>r.style.display=i<Number(document.getElementById('dg-n').value)?'flex':'none')">Cập nhật</button></div>
+      <div style="margin-top:8px">${rows}</div>${cfgBoxes(defaultCfg(8))}
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Bấm vào hình để đổi đại diện. Nhiều người thật chung máy → app sẽ nhắc chuyền máy khi cần giữ bí mật.</div>`,
+      ["Bắt đầu"]);
+    const n=Number($("dg-n").value), cfg=readCfg();
+    const roles=buildRoles(n,cfg);
+    if(!roles){await modal("⚠️ Vai nhiều hơn người","Số vai đặc biệt + Sói đang vượt quá sĩ số. Bỏ bớt vai hoặc tăng sĩ số.",["Sửa lại"]);continue;}
+    const rws=[...document.querySelectorAll(".setrow")].slice(0,n);
+    P=rws.map((r,i)=>{
+      const kindTxt=r.querySelector("select").value;
+      const kind=kindTxt==="AI"?"ai":(kindTxt==="Bạn online"?"remote":"local");
+      return {id:i,name:r.querySelector("input").value.trim()||("Người chơi "+(i+1)),ava:r.querySelector(".sava").textContent,
+        kind,role:roles[i],alive:true,lover:-1,idol:-1,shield:roles[i]==="elder",mem:null};
+    });
+    if(!P.some(p=>p.kind!=="ai")&&!host){await modal("⚠️ Cần ít nhất 1 người thật","Toàn AI thì… để máy tự chơi với nhau à? Chọn ít nhất 1 Người.",["Sửa lại"]);continue;}
+    P.forEach(p=>{if(isAIp(p))ensureMem(p);});
+    return;
+  }
+}
+
+/* ============ AI ============ */
+function ensureMem(p){if(!p.mem)p.mem={susp:{},known:{}};}
+function aiSusp(p,q){ensureMem(p);if(p.mem.susp[q.id]===undefined)p.mem.susp[q.id]=5+rnd(6);return p.mem.susp[q.id];}
+function aiTopTarget(p,pool){return pool.slice().sort((a,b)=>aiSusp(p,b)-aiSusp(p,a))[0];}
+function aiWolfPick(pool){
+  const sc=alive().find(q=>q.id===seerClaim&&q.alive);
+  if(sc&&pool.includes(sc))return sc.id;
+  return pool[rnd(pool.length)].id;
+}
+function aiTalkLines(){
+  if(MODE==="gm")return;
+  const speakers=shuffle(alive().filter(p=>isAIp(p))).slice(0,3);
+  speakers.forEach(p=>{
+    ensureMem(p);
+    const sAI=alive().find(q=>q.role==="seer"&&isAIp(q));
+    if(p===sAI&&Object.values(p.mem.known).includes("wolf")){
+      const tid=Number(Object.keys(p.mem.known).find(k=>p.mem.known[k]==="wolf"));
+      const t=P[tid];
+      if(t&&t.alive){
+        seerClaim=p.id;
+        log(`<span class="talk">🔮 <b>${p.name}</b>: "Tôi là TIÊN TRI! Đêm qua tôi soi <b>${t.name}</b> — CHÍNH LÀ SÓI!"</span>`,"imp");
+        alive().filter(q=>isAIp(q)&&!isWolfSide(q)).forEach(q=>{ensureMem(q);q.mem.susp[tid]=(q.mem.susp[tid]||5)+25;});
+        return;
+      }
+    }
+    const pool=alive().filter(q=>q.id!==p.id&&(!isWolfSide(p)||!isWolfSide(q)));
+    if(!pool.length)return;
+    const t=aiTopTarget(p,pool);
+    const tpl=[`Tôi thấy <b>${t.name}</b> hôm nay cứ lấm lét thế nào ấy…`,
+      `Đêm qua tôi nghe tiếng động phía nhà <b>${t.name}</b> đó nha.`,
+      `Theo trực giác của tôi thì <b>${t.name}</b> đáng nghi nhất.`,
+      `<b>${t.name}</b> vote kỳ lắm, mọi người để ý chưa?`];
+    log(`<span class="talk">💬 <b>${p.name}</b>: "${tpl[rnd(tpl.length)]}"</span>`);
+  });
+}
+
+/* ============ HỎI HÀNH ĐỘNG ============ */
+function btnOf(p){return `<span class="pe">${p.ava}</span>${p.name}`;}
+async function actPick(actor,title,question,pool,extra){
+  const btns=pool.map(btnOf); if(extra)btns.push(extra);
+  const idx=await decide(actor,title,`<div>${question}</div><div style="font-size:11px;color:var(--muted);margin-top:6px">${MODE==="gm"?"Quản trò nhập theo lựa chọn thật ngoài bàn.":""}</div>`,btns);
+  if(idx<0||idx>=pool.length)return -1;
+  return pool[idx].id;
+}
+
+/* ============ CHẾT CHÓC (xử lý dây chuyền) ============ */
+let pendingHunters=[];
+function kill(p,cause,deaths){
+  if(!p||!p.alive)return;
+  if(cause==="wolf"&&p.role==="elder"&&p.shield){
+    p.shield=false;
+    log(`🧓 Có tiếng răng nghiến trong đêm… nhưng <b>ai đó</b> dai sức lạ thường. (Già Làng đỡ được nhát cắn đầu tiên)`,"imp");
+    return;
+  }
+  p.alive=false; deaths.push(p); sfx.death();
+  if(p.role==="hunter")pendingHunters.push(p);
+  if(p.role==="fool"&&cause==="vote")foolWinner=p.id;
+  if(p.lover>-1&&P[p.lover].alive){
+    log(`💔 <b>${P[p.lover].name}</b> ôm xác người yêu, đau đớn lìa đời theo.`,"imp");
+    kill(P[p.lover],"heartbreak",deaths);
+  }
+  alive().forEach(q=>{
+    if(q.role==="bansoi"&&q.idol===p.id){
+      q.role="wolf"; q.idol=-1;
+      log(`🌗 Xa xa vọng lại một tiếng tru mới… bầy sói dường như đông thêm.`, "imp");
+      privNotice(q,"🌗 Thần tượng đã chết","Trái tim bạn hoá dã thú — từ đêm nay bạn là <b>MA SÓI</b>. Hãy thức dậy cùng bầy.");
+    }
+  });
+}
+async function resolveHunters(deaths){
+  while(pendingHunters.length){
+    const h=pendingHunters.shift();
+    log(`🏹 <b>${h.name}</b> là THỢ SĂN — phát súng cuối cùng vang lên!`,true);
+    const pool=alive().filter(q=>q.id!==h.id);
+    if(!pool.length)break;
+    let tid;
+    if(isAIp(h))tid=aiTopTarget(h,pool).id;
+    else tid=await actPick(h,"🏹 Thợ Săn nổ súng",`<b>${h.name}</b> kéo ai theo mình?`,pool,"Không bắn ai");
+    if(tid>-1){log(`🏹 Viên đạn găm trúng <b>${P[tid].name}</b>!`,true);kill(P[tid],"shot",deaths);}
+  }
+}
+
+/* ============ KIỂM TRA THẮNG ============ */
+function winState(){
+  if(foolWinner>-1)return "fool";
+  const a=alive(), ws=a.filter(isWolfSide);
+  if(loversCross&&a.length===2&&lovers.length===2&&a.every(p=>lovers.includes(p.id)))return "lovers";
+  if(ws.length===0)return "vill";
+  if(ws.length>=a.length-ws.length)return "wolf";
+  return null;
+}
+function finishGame(w){
+  gameOver=true; nightMode(false); updateUI(); sfx.win(); confetti();
+  const msg={vill:"🌾 PHE DÂN LÀNG TOÀN THẮNG — bầy sói đã bị quét sạch!",
+    wolf:"🐺 BẦY SÓI NUỐT TRỌN NGÔI LÀNG — phe Sói thắng!",
+    fool:`🤡 ${foolWinner>-1?P[foolWinner].name:"Thằng Ngốc"} BỊ TREO CỔ TRONG SUNG SƯỚNG — Ngốc thắng một mình!`,
+    lovers:`💘 TÌNH YÊU CHIẾN THẮNG TẤT CẢ — ${lovers.map(i=>P[i].name).join(" & ")} là 2 người cuối cùng!`}[w];
+  setPhase(msg); log(`<b>${msg}</b>`,true);
+  log(`📜 Vai trò: ${P.map(p=>`${p.ava}${p.name} = ${ROLE[p.role].e}${ROLE[p.role].n}`).join(" · ")}`);
+  bcast({t:"notice",title:"🏁 KẾT THÚC",body:msg});
+  try{
+    const h=JSON.parse(localStorage.getItem(HOF_KEY)||"[]");
+    h.unshift({w:msg,n:P.length,d:dayNo,date:new Date().toISOString().slice(0,10)});
+    localStorage.setItem(HOF_KEY,JSON.stringify(h.slice(0,10)));
+  }catch(e){}
+  modal("🏁 Ván đấu kết thúc",`${msg}<div style="margin-top:10px;font-size:12px;color:var(--muted)">Ván kéo dài ${dayNo} đêm · ${P.length} người chơi</div>`,["Ván mới","Ở lại xem làng"]).then(i=>{if(i===0)location.reload();});
+}
+
+/* ============ ĐÊM ============ */
+async function nightZero(){
+  const c=alive().find(p=>p.role==="cupid");
+  if(c){
+    turnGlow=-1; setPhase("💘 Cupid choàng dậy se duyên…");
+    let a,b;
+    if(isAIp(c)){const pool=shuffle(alive().slice());a=pool[0].id;b=pool[1].id;}
+    else{
+      a=await actPick(c,"💘 Cupid","Chọn NGƯỜI THỨ NHẤT của cặp Tình Nhân:",alive());
+      const pool2=alive().filter(q=>q.id!==a);
+      b=await actPick(c,"💘 Cupid",`Đã chọn <b>${a>-1?P[a].name:"?"}</b>. Chọn NGƯỜI THỨ HAI:`,pool2);
+    }
+    if(a>-1&&b>-1){
+      lovers=[a,b]; P[a].lover=b; P[b].lover=a;
+      loversCross=isWolfSide(P[a])!==isWolfSide(P[b]);
+      log("💘 Cupid đã bắn mũi tên định mệnh trong đêm…","imp");
+      await privNotice(P[a],"💘 Bạn đã trúng tên Cupid",`Người yêu của bạn là <b>${P[b].ava} ${P[b].name}</b>. Một người chết, người kia chết theo.${loversCross?" Hai bạn KHÁC PHE → phe Tình Nhân: thắng khi là 2 người cuối cùng!":""}`);
+      await privNotice(P[b],"💘 Bạn đã trúng tên Cupid",`Người yêu của bạn là <b>${P[a].ava} ${P[a].name}</b>. Một người chết, người kia chết theo.${loversCross?" Hai bạn KHÁC PHE → phe Tình Nhân: thắng khi là 2 người cuối cùng!":""}`);
+    }
+  }
+  const bs=alive().find(p=>p.role==="bansoi");
+  if(bs){
+    setPhase("🌗 Bán Sói chọn thần tượng…");
+    if(isAIp(bs)){const pool=alive().filter(q=>q.id!==bs.id);bs.idol=pool[rnd(pool.length)].id;}
+    else bs.idol=await actPick(bs,"🌗 Bán Sói","Chọn THẦN TƯỢNG của bạn (người này chết, bạn hoá Sói):",alive().filter(q=>q.id!==bs.id));
+  }
+}
+async function nightPhase(){
+  dayNo++; pendingHunters=[];
+  nightMode(true); sfx.night();
+  setPhase(`🌙 Đêm thứ ${dayNo} — cả làng chìm vào giấc ngủ`);
+  log(`<b>🌙 Đêm thứ ${dayNo} buông xuống Làng Trăng Mơ.</b>`,true);
+  updateUI(); await sleep(1000);
+  if(dayNo===1)await nightZero();
+  // Bảo Vệ
+  let protectId=-1;
+  const g=alive().find(p=>p.role==="guard");
+  if(g){
+    setPhase("🛡️ Bảo Vệ thức dậy…");
+    const pool=alive().filter(q=>q.id!==lastGuard);
+    if(isAIp(g)){const sc=pool.find(q=>q.id===seerClaim);protectId=(sc&&Math.random()<.7)?sc.id:pool[rnd(pool.length)].id;}
+    else protectId=await actPick(g,"🛡️ Bảo Vệ","Đêm nay che chắn cho ai? (không lặp người vừa che đêm trước)",pool);
+    lastGuard=protectId;
+  }
+  // Bầy Sói
+  let victim=-1;
+  const ws=wolvesAlive2();
+  if(ws.length){
+    setPhase("🐺 Bầy Sói mở mắt, đảo quanh làng…");
+    const pool=alive().filter(q=>!isWolfSide(q));
+    if(pool.length){
+      const rep=ws.find(w=>!isAIp(w));
+      if(rep)victim=await actPick(rep,`🐺 Bầy Sói (${ws.map(w=>w.name).join(", ")})`,"Bầy thống nhất CẮN ai đêm nay?",pool,"Không cắn ai");
+      else victim=aiWolfPick(pool);
+    }
+  }
+  // Tiên Tri
+  const s=alive().find(p=>p.role==="seer");
+  if(s){
+    setPhase("🔮 Tiên Tri lật quân bài định mệnh…");
+    const pool=alive().filter(q=>q.id!==s.id);
+    let tid;
+    if(isAIp(s)){ensureMem(s);const unk=pool.filter(q=>s.mem.known[q.id]===undefined);tid=unk.length?unk[rnd(unk.length)].id:pool[rnd(pool.length)].id;}
+    else tid=await actPick(s,"🔮 Tiên Tri","Soi thân phận của ai đêm nay?",pool);
+    if(tid>-1){
+      const isWolf=P[tid].role==="wolf"; // Sói Trùm soi ra "không phải Sói"
+      if(isAIp(s)){s.mem.known[tid]=isWolf?"wolf":"clear";if(!isWolf){ensureMem(s);s.mem.susp[tid]=0;}}
+      else await privNotice(s,"🔮 Kết quả soi",`<div class="rolebig">${isWolf?"🐺":"🌾"}</div><b>${P[tid].ava} ${P[tid].name}</b> ${isWolf?"<b>CHÍNH LÀ SÓI!</b>":"không phải Sói."}`);
+    }
+  }
+  // Phù Thủy
+  let saved=false, poisoned=-1;
+  const w=alive().find(p=>p.role==="witch");
+  if(w){
+    setPhase("🧪 Phù Thủy mở rương thuốc…");
+    if(healLeft&&victim>-1){
+      let useHeal=false;
+      if(isAIp(w))useHeal=(victim===w.id)||(dayNo<=2&&Math.random()<.5);
+      else useHeal=(await decide(w,"🧪 Phù Thủy — Bình CỨU",`Đêm nay Sói cắn <b>${P[victim].ava} ${P[victim].name}</b>. Dùng bình cứu duy nhất?`,["Cứu 💚","Không cứu"]))===0;
+      if(useHeal){saved=true;healLeft=false;}
+    }
+    if(poisonLeft){
+      let tid=-1;
+      if(isAIp(w)){ if(dayNo>=3&&Math.random()<.3){const pool=alive().filter(q=>q.id!==w.id);tid=aiTopTarget(w,pool).id;} }
+      else tid=await actPick(w,"🧪 Phù Thủy — Bình ĐỘC",`Dùng bình độc duy nhất cho ai?${healLeft?"":" (bình cứu đã hết)"}`,alive().filter(q=>q.id!==w.id),"Không dùng đêm nay");
+      if(tid>-1){poisoned=tid;poisonLeft=false;}
+    }
+  }
+  // Kết đêm
+  const deaths=[];
+  if(victim>-1&&!saved&&victim!==protectId)kill(P[victim],"wolf",deaths);
+  if(victim>-1&&(saved||victim===protectId))log(saved?"🧪 Một mùi thảo dược thoảng trong đêm…":"🛡️ Có tiếng khiên chắn vang lên trong đêm…");
+  if(poisoned>-1)kill(P[poisoned],"poison",deaths);
+  await resolveHunters(deaths);
+  return deaths;
+}
+function wolvesAlive2(){return alive().filter(isWolfSide);}
+
+/* ============ NGÀY ============ */
+async function doVote(){
+  setPhase(`🗳️ Ngày ${dayNo} — biểu quyết treo cổ`);
+  const pool=alive();
+  if(MODE==="gm"){
+    return await actPick({kind:"manual"},"🗳️ Quản trò nhập kết quả","Cả làng ngoài bàn biểu quyết treo ai? Đếm phiếu thật rồi chọn:",pool,"Không ai bị treo");
+  }
+  const tally={};
+  for(const p of pool){
+    let tid=-1;
+    const opts=pool.filter(q=>q.id!==p.id);
+    if(isAIp(p)){
+      const cand=isWolfSide(p)?opts.filter(q=>!isWolfSide(q)):opts;
+      tid=cand.length?aiTopTarget(p,cand).id:-1;
+    }else{
+      tid=await actPick(p,"🗳️ Bỏ phiếu",`<b>${p.name}</b>, bạn muốn treo cổ ai?`,opts,"Phiếu trắng");
+    }
+    if(tid>-1){tally[tid]=(tally[tid]||0)+1;log(`🗳️ <b>${p.name}</b> bỏ phiếu <b>${P[tid].name}</b>.`);sfx.vote();}
+    else log(`🗳️ <b>${p.name}</b> bỏ phiếu trắng.`);
+    await sleep(250);
+  }
+  const max=Math.max(0,...Object.values(tally));
+  const top=Object.keys(tally).filter(k=>tally[k]===Number(max)||tally[k]===max);
+  if(max===0||top.length>1){return -1;}
+  return Number(top[0]);
+}
+async function dayPhase(deaths){
+  nightMode(false); sfx.day();
+  setPhase(`☀️ Ngày thứ ${dayNo} — làng tỉnh giấc`);
+  await sleep(700);
+  if(deaths.length){
+    deaths.forEach(p=>{log(`💀 Sáng ra, làng tìm thấy <b>${p.name}</b> — vai: ${ROLE[p.role].e} <b>${ROLE[p.role].n}</b>.`,true);});
+    bcast({t:"notice",title:"💀 Tin dữ buổi sáng",body:deaths.map(p=>`${p.name} (${ROLE[p.role].n})`).join(", ")+" đã chết đêm qua."});
+  }else log("😮‍💨 Một đêm bình yên — không ai chết!",true);
+  updateUI();
+  let w=winState(); if(w){finishGame(w);return true;}
+  await sleep(900);
+  aiTalkLines(); updateUI();
+  const hangId=await doVote();
+  const d2=[];
+  if(hangId>-1){
+    log(`⚖️ Cả làng trói <b>${P[hangId].name}</b> lên giá treo…`,true);
+    await sleep(700);
+    kill(P[hangId],"vote",d2);
+    const hp=d2.find(x=>x.id===hangId);
+    if(hp)log(`💀 <b>${hp.name}</b> bị treo cổ — vai: ${ROLE[hp.role].e} <b>${ROLE[hp.role].n}</b>.`,true);
+    await resolveHunters(d2);
+  }else log("⚖️ Hòa phiếu hoặc làng bỏ qua — không ai bị treo hôm nay.",true);
+  // AI học từ kết quả treo
+  if(hangId>-1&&P[hangId]){
+    const wasWolf=isWolfSide(P[hangId]);
+    P.filter(q=>isAIp(q)&&q.alive).forEach(q=>{ensureMem(q);
+      Object.keys(q.mem.susp).forEach(k=>{q.mem.susp[k]+=rnd(3)-1;});
+      if(!wasWolf)q.mem.susp[hangId]=0;
+    });
+  }
+  updateUI();
+  w=winState(); if(w){finishGame(w);return true;}
+  return false;
+}
+async function gameLoop(){
+  while(!gameOver){
+    const deaths=await nightPhase();
+    updateUI();
+    if(await dayPhase(deaths))break;
+  }
+}
+
+/* ============ CHIA & XEM VAI ============ */
+async function revealRoles(){
+  for(const p of P){
+    if(isAIp(p))continue;
+    if(isRem(p)){
+      sendTo(p.id,{t:"role",e:ROLE[p.role].e,n:ROLE[p.role].n,d:ROLE[p.role].d,
+        mates:isWolfSide(p)?P.filter(isWolfSide).map(x=>x.name).join(", "):""});
+      continue;
+    }
+    await modal(`🤫 Chuyền máy cho ${p.name}`,`Chỉ <b>${p.name}</b> được nhìn màn hình kế tiếp — người khác quay đi nhé.`,[`Tôi là ${p.name} — xem vai`]);
+    const mates=isWolfSide(p)&&P.filter(isWolfSide).length>1?`<div style="margin-top:8px">🐺 Bầy của bạn: <b>${P.filter(isWolfSide).map(q=>q.name).join(", ")}</b></div>`:"";
+    await modal(`Bạn là ${ROLE[p.role].n}`,`<div class="rolebig">${ROLE[p.role].e}</div><b>${ROLE[p.role].n}</b><div style="margin-top:6px">${ROLE[p.role].d}</div>${mates}`,["Đã nhớ — giấu bài 🤫"]);
+  }
+}
+
+/* ============ ONLINE ============ */
+function hostLobby(code){
+  return new Promise(res=>{
+    const need=P.filter(isRem); let got=0;
+    const upd=()=>{
+      $("mtitle").innerHTML="🌐 Phòng "+code;
+      $("mbody").innerHTML=`Gửi mã <b style="font-size:24px;letter-spacing:5px;color:var(--accent)">${code}</b> cho bạn bè — họ mở đúng link game này và chọn <b>"Vào phòng online"</b>.<br><br>Đã vào: <b>${got}/${need.length}</b>`;
+      $("mbtns").innerHTML="";
+    };
+    $("overlay").style.display="flex"; upd();
+    NET.peer.on("connection",c=>{
+      const slot=need.find(p=>!NET.conns[p.id]);
+      if(!slot){try{c.close();}catch(e){} return;}
+      NET.conns[slot.id]=c;
+      c.on("open",()=>{
+        got++; upd();
+        c.send(JSON.stringify({t:"hello",name:slot.name}));
+        if(got>=need.length){$("overlay").style.display="none";res();}
+      });
+      c.on("data",d=>{try{const m=JSON.parse(d);
+        if(m.t==="ans"&&NET.pending[m.seq]){const r=NET.pending[m.seq];delete NET.pending[m.seq];r(m.idx);}
+      }catch(e){}});
+      c.on("close",()=>onGuestDrop(slot.id));
+    });
+  });
+}
+function renderSnap(m){
+  if(P.length!==m.ps.length){
+    P=m.ps.map((q,i)=>({id:i,name:q.name,ava:q.ava,alive:q.alive,kind:q.kind,role:q.role||"vill",lover:-1,idol:-1,shield:false,mem:null}));
+    buildSeats();
+  }
+  m.ps.forEach((q,i)=>{P[i].alive=q.alive;if(q.role)P[i].role=q.role;});
+  dayNo=m.day;
+  $("phasebar").innerHTML=m.ph;
+  $("log").innerHTML=m.log;
+  P.forEach((p,i)=>{
+    const s=$("seat"+p.id); if(!s)return;
+    s.classList.toggle("dead",!p.alive);
+    s.querySelector(".rl").innerHTML=(!p.alive&&m.ps[i].role)?`${ROLE[m.ps[i].role].e} ${ROLE[m.ps[i].role].n}`:"";
+  });
+  const pl=$("plist"); pl.innerHTML="";
+  P.forEach((p,i)=>{
+    const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
+    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr">${p.alive?"còn sống":(m.ps[i].role?ROLE[m.ps[i].role].e+" "+ROLE[m.ps[i].role].n:"đã chết")}</span>`;
+    pl.appendChild(d);
+  });
+}
+function onGuestData(conn,raw){
+  let m; try{m=JSON.parse(raw);}catch(e){return;}
+  if(m.t==="snap")renderSnap(m);
+  else if(m.t==="hello"){$("rolecard").innerHTML=`Bạn là <b>${m.name}</b> trong ván này.`;}
+  else if(m.t==="role"){
+    NET.myRole=m;
+    $("rolecard").innerHTML=`Vai của bạn: <b>${m.e} ${m.n}</b>${m.mates?` · bầy: ${m.mates}`:""}`;
+    modal(`Bạn là ${m.n}`,`<div class="rolebig">${m.e}</div><b>${m.n}</b><div style="margin-top:6px">${m.d}</div>${m.mates?`<div style="margin-top:8px">🐺 Bầy của bạn: <b>${m.mates}</b></div>`:""}`,["Đã nhớ — giấu bài 🤫"]);
+  }
+  else if(m.t==="ask"){modal(m.title,m.body,m.btns).then(i=>{try{conn.send(JSON.stringify({t:"ans",seq:m.seq,idx:i}));}catch(e){}});}
+  else if(m.t==="priv"){modal(m.title,m.body,["Đã rõ 🤫"]);}
+  else if(m.t==="notice"){log(`<b>${m.title}</b> — ${m.body}`,true);}
+  else if(m.t==="nightm"){nightMode(m.on);}
+}
+async function guestJoin(){
+  await modal("🌐 Vào phòng online",`<input id="gcode" maxlength="5" placeholder="MÃ PHÒNG" style="width:100%;text-transform:uppercase;font-size:20px;letter-spacing:6px;text-align:center;font-family:inherit;padding:11px;border:1.5px solid var(--hair);border-radius:12px;background:var(--bg);color:var(--ink)">`,["Kết nối"]);
+  const code=($("gcode").value||"").trim().toUpperCase();
+  NET.mode="guest"; MODE="online";
+  setPhase("🌐 Đang kết nối phòng "+code+"…");
+  const peer=new Peer(); NET.peer=peer;
+  peer.on("open",()=>{
+    const conn=peer.connect("masoi6-"+code,{reliable:true}); NET.host=conn;
+    conn.on("open",()=>setPhase("🌐 Đã vào phòng "+code+" — chờ chủ phòng bắt đầu…"));
+    conn.on("data",d=>onGuestData(conn,d));
+    conn.on("close",()=>setPhase("📡 Mất kết nối với chủ phòng."));
+  });
+  peer.on("error",()=>setPhase("⚠️ Không tìm thấy phòng "+code+". Kiểm tra lại mã nhé."));
+}
+
+/* ============ NÚT HEADER ============ */
+function applyTheme(t){
+  document.body.classList.toggle("dark",t==="dark");
+  $("btn-theme").textContent="Giao diện: "+(t==="dark"?"Đêm Trăng":"Light");
+  try{localStorage.setItem("masoi-theme",t);}catch(e){}
+}
+$("btn-theme").onclick=()=>applyTheme(document.body.classList.contains("dark")?"light":"dark");
+$("btn-sound").onclick=()=>{soundOn=!soundOn;$("btn-sound").textContent="Âm thanh: "+(soundOn?"Bật":"Tắt");};
+$("btn-speed").onclick=()=>{SPD=SPD===1?0.45:1;$("btn-speed").textContent=SPD===1?"Tốc độ: Thường":"Tốc độ: Nhanh";};
+$("btn-new").onclick=()=>{if(confirm("Bắt đầu ván mới? Ván hiện tại sẽ kết thúc."))location.reload();};
+$("btn-hof").onclick=()=>{
+  let h=[]; try{h=JSON.parse(localStorage.getItem(HOF_KEY)||"[]");}catch(e){}
+  const body=h.length?h.map((e,i)=>`<div style="text-align:left;border-bottom:1px dashed var(--hair);padding:5px 0;font-size:12.5px">${i+1}. ${e.w}<br><span style="font-size:10.5px;color:var(--muted)">${e.n} người · ${e.d} đêm · ${e.date}</span></div>`).join(""):"Chưa có ván nào kết thúc trên máy này. 🐺";
+  modal("🏆 Bảng vàng Làng Trăng Mơ",body,["Đóng"]);
+};
+
+/* ============ KHỞI ĐỘNG ============ */
+(async function boot(){
+  applyTheme(localStorage.getItem("masoi-theme")||"light");
+  const mi=await modal("🐺 MA SÓI — Làng Trăng Mơ","Chơi kiểu gì hôm nay?",
+    ["Chơi trên máy này","🎩 Quản trò bàn thật","Tạo phòng online","Vào phòng online"]);
+  if(mi===3){await guestJoin();return;}
+  if(mi===1){
+    await setupGM();
+  }else if(mi===2){
+    NET.mode="host"; MODE="online";
+    const code=mkCode();
+    NET.peer=new Peer("masoi6-"+code);
+    await setupDigital(true);
+    if(P.some(isRem))await hostLobby(code); else NET.mode=null;
+  }else{
+    MODE="digital";
+    await setupDigital(false);
+  }
+  buildSeats(); updateUI();
+  log(`🌕 Chào mừng đến <b>Làng Trăng Mơ</b>! ${P.length} người nhập cuộc — ${P.filter(isWolfSide).length} Sói ẩn mình đâu đó.`,true);
+  $("rolecard").innerHTML=MODE==="gm"?"🎩 Bạn là <b>Quản Trò</b> — app sẽ dẫn dắt từng bước.":"";
+  await revealRoles();
+  gameLoop();
+})();
+</script>
+</body>
+</html>
