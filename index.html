@@ -141,7 +141,7 @@
           <summary>📜 Cách chơi</summary>
           <p><b>🎯 Mục tiêu:</b> làng chia 2 phe. <b>Phe Sói</b> 🐺 thắng khi số Sói ≥ số người còn lại. <b>Phe Dân</b> thắng khi treo cổ hết Sói.</p>
           <p><b>🌙 Ban đêm:</b> cả làng nhắm mắt. Lần lượt: 🛡️ <b>Bảo Vệ</b> chọn người che chắn (không lặp lại đêm liền trước) → 🐺 <b>Bầy Sói</b> thống nhất cắn 1 người → 🔮 <b>Tiên Tri</b> soi 1 người là Sói hay không → 🧪 <b>Phù Thủy</b> thấy nạn nhân, có 1 bình cứu và 1 bình độc (mỗi bình dùng đúng 1 lần cả ván).</p>
-          <p><b>☀️ Ban ngày:</b> công bố người chết (lộ vai). Cả làng thảo luận rồi <b>bỏ phiếu treo cổ</b> — nhiều phiếu nhất bị treo (hòa phiếu = không ai bị treo). 🏹 <b>Thợ Săn</b> khi chết được kéo theo 1 người.</p>
+          <p><b>☀️ Ban ngày:</b> công bố người chết — <b>thân phận được GIẤU KÍN</b> (kể cả khi treo cổ), không ai biết còn bao nhiêu Sói cho tới hết ván. Cả làng thảo luận rồi <b>bỏ phiếu treo cổ</b> — nhiều phiếu nhất bị treo (hòa phiếu = không ai bị treo). 🏹 <b>Thợ Săn</b> khi chết được kéo theo 1 người (phát súng nên cả làng biết đó là Thợ Săn). Toàn bộ vai chỉ lật ngửa ở màn kết.</p>
           <p><b>📖 Chi tiết các thân phận (bấm nút "Vai trò" trên đầu trang để mở nhanh bất cứ lúc nào):</b></p>
           <div id="roleguide"></div>
           <p style="margin-top:8px"><b>🃏 Gợi ý theo sĩ số (tự cấu hình được):</b> 8+: Phù Thủy & Thợ Săn · 9+: Sói Trùm · 10+: Cupid & Thằng Ngốc · 12+: Già Làng & Bán Sói.</p>
@@ -203,7 +203,7 @@ const mkCode=()=>Array.from({length:5},()=>CODE_CH[rnd(CODE_CH.length)]).join(""
 function bcast(m){if(NET.mode!=="host")return;const s=JSON.stringify(m);Object.values(NET.conns).forEach(c=>{try{c.send(s);}catch(e){}});}
 function sendTo(pid,m){if(NET.mode!=="host")return;const c=NET.conns[pid];if(c){try{c.send(JSON.stringify(m));}catch(e){}}}
 function snapMsg(){return {t:"snap",day:dayNo,ph:$("phasebar").textContent,glow:turnGlow,
-  ps:P.map(p=>({name:p.name,ava:p.ava,alive:p.alive,kind:p.kind,role:(!p.alive||gameOver)?p.role:null})),
+  ps:P.map(p=>({name:p.name,ava:p.ava,alive:p.alive,kind:p.kind,role:gameOver?p.role:null})),
   log:$("log").innerHTML.split("</div>").slice(0,80).join("</div>")+"</div>"};}
 function remoteAsk(p,title,body,btns){
   return new Promise(res=>{
@@ -274,14 +274,14 @@ function updateUI(){
     const s=$("seat"+p.id); if(!s)return;
     s.classList.toggle("dead",!p.alive);
     s.classList.toggle("turnglow",p.id===turnGlow);
-    s.querySelector(".rl").innerHTML=(!p.alive||gameOver)?`${ROLE[p.role].e} ${ROLE[p.role].n}`:"";
+    s.querySelector(".rl").innerHTML=gameOver?`${ROLE[p.role].e} ${ROLE[p.role].n}`:(!p.alive?"⚰️":"");
   });
   const pl=$("plist"); if(pl){pl.innerHTML="";
     P.forEach(p=>{
       const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
       let badge=isAIp(p)?" <span style='font-size:9.5px;color:var(--muted)'>AI</span>":(isRem(p)?" 🌐":"");
       d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}${badge}</span>
-        <span class="pr">${p.alive?"còn sống":ROLE[p.role].e+" "+ROLE[p.role].n}</span>`;
+        <span class="pr">${p.alive?"còn sống":(gameOver?ROLE[p.role].e+" "+ROLE[p.role].n:"⚰️ đã mất")}</span>`;
       pl.appendChild(d);
     });}
   if(NET.mode==="host")bcast(snapMsg());
@@ -298,12 +298,16 @@ Object.assign(ROLE,{
   cupid:{n:"Cupid",e:"💘",team:"vill",d:"Đêm đầu ghép 2 người thành Tình Nhân: một người chết, người kia chết theo. Nếu đôi khác phe, họ thành phe thứ ba — thắng khi là 2 người cuối cùng."},
   fool:{n:"Thằng Ngốc",e:"🤡",team:"solo",d:"Mơ ước cả đời là… bị treo cổ. Nếu làng treo nhầm Ngốc — Ngốc THẮNG một mình, ván kết thúc."},
   elder:{n:"Già Làng",e:"🧓",team:"vill",d:"Da dày sương gió — chịu được nhát cắn ĐẦU TIÊN của Sói (độc dược và treo cổ vẫn chết)."},
-  bansoi:{n:"Bán Sói",e:"🌗",team:"vill",d:"Đêm đầu chọn một thần tượng. Ngày nào thần tượng chết — Bán Sói hoá thành Ma Sói thật."}
+  bansoi:{n:"Bán Sói",e:"🌗",team:"vill",d:"Đêm đầu chọn một thần tượng. Ngày nào thần tượng chết — Bán Sói hoá thành Ma Sói thật."},
+  traitor:{n:"Kẻ Phản Bội",e:"🗡️",team:"wolf",d:"Phe Sói nhưng hoạt động đơn độc: không biết bầy là ai, bầy cũng không biết hắn (thậm chí có thể cắn nhầm hắn), Tiên Tri soi ra 'không phải Sói'. Hắn thắng cùng phe Sói — kẻ gây nhiễu hoàn hảo."},
+  blindseer:{n:"Thầy Bói Mù",e:"🧿",team:"vill",d:"Bi kịch nhất làng: nhận vai 'Tiên Tri' y hệt thật, soi mỗi đêm như thật — nhưng kết quả là… bói mò (ngẫu nhiên). Chính chủ KHÔNG hề biết. Mọi lời claim Tiên Tri từ nay đều đáng ngờ."},
+  cursed:{n:"Kẻ Nguyền Rủa",e:"🐍",team:"vill",d:"Dân lành mang lời nguyền: bị Sói cắn KHÔNG chết mà lặng lẽ HOÁ SÓI từ đêm sau (làng chỉ thấy một đêm bình yên). Treo cổ và độc dược vẫn giết được như thường."}
 });
+const PACK=p=>p.role==="wolf"||p.role==="alpha"; // bầy sói thật sự (Kẻ Phản Bội không thuộc bầy)
 let lovers=[], loversCross=false, foolWinner=-1, MODE="digital"; // digital | gm | online
 function defaultCfg(n){
   return {wolves:Math.min(4,Math.max(1,Math.round(n/4))), alpha:n>=9, witch:n>=8, hunter:n>=8,
-    cupid:n>=10, fool:n>=10, elder:n>=12, bansoi:n>=12};
+    cupid:n>=10, fool:n>=10, elder:n>=12, bansoi:n>=12, traitor:n>=10, blindseer:n>=12, cursed:n>=14};
 }
 function buildRoles(n,cfg){
   const r=[];
@@ -312,6 +316,7 @@ function buildRoles(n,cfg){
   if(cfg.witch)r.push("witch"); if(cfg.hunter)r.push("hunter");
   if(cfg.cupid)r.push("cupid"); if(cfg.fool)r.push("fool");
   if(cfg.elder)r.push("elder"); if(cfg.bansoi)r.push("bansoi");
+  if(cfg.traitor)r.push("traitor"); if(cfg.blindseer)r.push("blindseer"); if(cfg.cursed)r.push("cursed");
   while(r.length<n)r.push("vill");
   return r.length>n?null:shuffle(r);
 }
@@ -320,7 +325,7 @@ const isWolfSide=p=>ROLE[p.role].team==="wolf";
 /* ============ MÀN HÌNH THIẾT LẬP ============ */
 window.cycAva=el=>{const i=(AVAS.indexOf(el.textContent)+1)%AVAS.length; el.textContent=AVAS[i];};
 function cfgBoxes(cfg){
-  const items=[["alpha","👑 Sói Trùm"],["witch","🧪 Phù Thủy"],["hunter","🏹 Thợ Săn"],["cupid","💘 Cupid"],["fool","🤡 Thằng Ngốc"],["elder","🧓 Già Làng"],["bansoi","🌗 Bán Sói"]];
+  const items=[["alpha","👑 Sói Trùm"],["witch","🧪 Phù Thủy"],["hunter","🏹 Thợ Săn"],["cupid","💘 Cupid"],["fool","🤡 Thằng Ngốc"],["elder","🧓 Già Làng"],["bansoi","🌗 Bán Sói"],["traitor","🗡️ Kẻ Phản Bội"],["blindseer","🧿 Thầy Bói Mù"],["cursed","🐍 Kẻ Nguyền Rủa"]];
   return `<div style="text-align:left;margin:8px 0"><b>Số Sói:</b>
     <select id="cf-wolves">${[1,2,3,4].map(x=>`<option ${x===cfg.wolves?"selected":""}>${x}</option>`).join("")}</select>
     &nbsp;<span style="font-size:11px;color:var(--muted)">(Sói Trùm tính vào số Sói)</span></div>
@@ -330,7 +335,7 @@ function cfgBoxes(cfg){
 }
 function readCfg(){
   const cfg={wolves:Number($("cf-wolves").value)};
-  ["alpha","witch","hunter","cupid","fool","elder","bansoi"].forEach(k=>cfg[k]=$("cf-"+k).checked);
+  ["alpha","witch","hunter","cupid","fool","elder","bansoi","traitor","blindseer","cursed"].forEach(k=>cfg[k]=$("cf-"+k).checked);
   return cfg;
 }
 async function setupGM(){
@@ -396,7 +401,7 @@ function aiTalkLines(){
   const speakers=shuffle(alive().filter(p=>isAIp(p))).slice(0,3);
   speakers.forEach(p=>{
     ensureMem(p);
-    const sAI=alive().find(q=>q.role==="seer"&&isAIp(q));
+    const sAI=alive().find(q=>(q.role==="seer"||q.role==="blindseer")&&isAIp(q));
     if(p===sAI&&Object.values(p.mem.known).includes("wolf")){
       const tid=Number(Object.keys(p.mem.known).find(k=>p.mem.known[k]==="wolf"));
       const t=P[tid];
@@ -407,7 +412,7 @@ function aiTalkLines(){
         return;
       }
     }
-    const pool=alive().filter(q=>q.id!==p.id&&(!isWolfSide(p)||!isWolfSide(q)));
+    const pool=alive().filter(q=>q.id!==p.id&&(!PACK(p)||!PACK(q)));
     if(!pool.length)return;
     const t=aiTopTarget(p,pool);
     const tpl=[`Tôi thấy <b>${t.name}</b> hôm nay cứ lấm lét thế nào ấy…`,
@@ -536,27 +541,26 @@ async function nightPhase(){
   }
   // Bầy Sói
   let victim=-1;
-  const ws=wolvesAlive2();
+  const ws=alive().filter(PACK);
   if(ws.length){
     setPhase("🐺 Bầy Sói mở mắt, đảo quanh làng…");
-    const pool=alive().filter(q=>!isWolfSide(q));
+    const pool=alive().filter(q=>!PACK(q));
     if(pool.length){
       const rep=ws.find(w=>!isAIp(w));
       if(rep)victim=await actPick(rep,`🐺 Bầy Sói (${ws.map(w=>w.name).join(", ")})`,"Bầy thống nhất CẮN ai đêm nay?",pool,"Không cắn ai");
       else victim=aiWolfPick(pool);
     }
   }
-  // Tiên Tri
-  const s=alive().find(p=>p.role==="seer");
-  if(s){
+  // Tiên Tri thật + Thầy Bói Mù (trải nghiệm giống hệt nhau)
+  for(const s of alive().filter(p=>p.role==="seer"||p.role==="blindseer")){
     setPhase("🔮 Tiên Tri lật quân bài định mệnh…");
     const pool=alive().filter(q=>q.id!==s.id);
     let tid;
     if(isAIp(s)){ensureMem(s);const unk=pool.filter(q=>s.mem.known[q.id]===undefined);tid=unk.length?unk[rnd(unk.length)].id:pool[rnd(pool.length)].id;}
     else tid=await actPick(s,"🔮 Tiên Tri","Soi thân phận của ai đêm nay?",pool);
     if(tid>-1){
-      const isWolf=P[tid].role==="wolf"; // Sói Trùm soi ra "không phải Sói"
-      if(isAIp(s)){s.mem.known[tid]=isWolf?"wolf":"clear";if(!isWolf){ensureMem(s);s.mem.susp[tid]=0;}}
+      const isWolf=s.role==="seer"?(P[tid].role==="wolf"):(Math.random()<0.35); // Trùm & Phản Bội soi ra sạch; Bói Mù: bói mò
+      if(isAIp(s)){s.mem.known[tid]=isWolf?"wolf":"clear";if(!isWolf)s.mem.susp[tid]=0;}
       else await privNotice(s,"🔮 Kết quả soi",`<div class="rolebig">${isWolf?"🐺":"🌾"}</div><b>${P[tid].ava} ${P[tid].name}</b> ${isWolf?"<b>CHÍNH LÀ SÓI!</b>":"không phải Sói."}`);
     }
   }
@@ -580,7 +584,13 @@ async function nightPhase(){
   }
   // Kết đêm
   const deaths=[];
-  if(victim>-1&&!saved&&victim!==protectId)kill(P[victim],"wolf",deaths);
+  if(victim>-1&&!saved&&victim!==protectId){
+    if(P[victim].role==="cursed"){
+      P[victim].role="wolf";
+      log("🌒 Đêm trôi qua nặng nề… nhưng sáng ra không thấy xác ai. Chỉ có tiếng tru lạ phía rừng.","imp");
+      await privNotice(P[victim],"🐍 Lời nguyền ứng nghiệm","Nanh sói cắm vào vai bạn nhưng bạn KHÔNG chết — máu sói chảy trong người. Từ đêm sau bạn thức dậy cùng bầy: bạn là <b>MA SÓI</b>.");
+    } else kill(P[victim],"wolf",deaths);
+  }
   if(victim>-1&&(saved||victim===protectId))log(saved?"🧪 Một mùi thảo dược thoảng trong đêm…":"🛡️ Có tiếng khiên chắn vang lên trong đêm…");
   if(poisoned>-1)kill(P[poisoned],"poison",deaths);
   await resolveHunters(deaths);
@@ -600,7 +610,7 @@ async function doVote(){
     let tid=-1;
     const opts=pool.filter(q=>q.id!==p.id);
     if(isAIp(p)){
-      const cand=isWolfSide(p)?opts.filter(q=>!isWolfSide(q)):opts;
+      const cand=PACK(p)?opts.filter(q=>!PACK(q)):opts;
       tid=cand.length?aiTopTarget(p,cand).id:-1;
     }else{
       tid=await actPick(p,"🗳️ Bỏ phiếu",`<b>${p.name}</b>, bạn muốn treo cổ ai?`,opts,"Phiếu trắng");
@@ -619,8 +629,8 @@ async function dayPhase(deaths){
   setPhase(`☀️ Ngày thứ ${dayNo} — làng tỉnh giấc`);
   await sleep(700);
   if(deaths.length){
-    deaths.forEach(p=>{log(`💀 Sáng ra, làng tìm thấy <b>${p.name}</b> — vai: ${ROLE[p.role].e} <b>${ROLE[p.role].n}</b>.`,true);});
-    bcast({t:"notice",title:"💀 Tin dữ buổi sáng",body:deaths.map(p=>`${p.name} (${ROLE[p.role].n})`).join(", ")+" đã chết đêm qua."});
+    deaths.forEach(p=>{log(`💀 Sáng ra, làng tìm thấy <b>${p.name}</b> lạnh ngắt. Thân phận được chôn theo người.`,true);});
+    bcast({t:"notice",title:"💀 Tin dữ buổi sáng",body:deaths.map(p=>p.name).join(", ")+" đã chết đêm qua. Thân phận không được tiết lộ."});
   }else log("😮‍💨 Một đêm bình yên — không ai chết!",true);
   updateUI();
   let w=winState(); if(w){finishGame(w);return true;}
@@ -633,17 +643,13 @@ async function dayPhase(deaths){
     await sleep(700);
     kill(P[hangId],"vote",d2);
     const hp=d2.find(x=>x.id===hangId);
-    if(hp)log(`💀 <b>${hp.name}</b> bị treo cổ — vai: ${ROLE[hp.role].e} <b>${ROLE[hp.role].n}</b>.`,true);
+    if(hp)log(`💀 <b>${hp.name}</b> bị treo cổ. Làng nín thở… nhưng KHÔNG ai được lật mặt nạ — sói hay dân, mang theo xuống mồ.`,true);
     await resolveHunters(d2);
   }else log("⚖️ Hòa phiếu hoặc làng bỏ qua — không ai bị treo hôm nay.",true);
-  // AI học từ kết quả treo
-  if(hangId>-1&&P[hangId]){
-    const wasWolf=isWolfSide(P[hangId]);
-    P.filter(q=>isAIp(q)&&q.alive).forEach(q=>{ensureMem(q);
-      Object.keys(q.mem.susp).forEach(k=>{q.mem.susp[k]+=rnd(3)-1;});
-      if(!wasWolf)q.mem.susp[hangId]=0;
-    });
-  }
+  // vai bị giấu nên AI chỉ dao động nghi ngờ tự nhiên, không được "biết" kết quả
+  P.filter(q=>isAIp(q)&&q.alive).forEach(q=>{ensureMem(q);
+    Object.keys(q.mem.susp).forEach(k=>{q.mem.susp[k]+=rnd(3)-1;});
+  });
   updateUI();
   w=winState(); if(w){finishGame(w);return true;}
   return false;
@@ -661,13 +667,15 @@ async function revealRoles(){
   for(const p of P){
     if(isAIp(p))continue;
     if(isRem(p)){
-      sendTo(p.id,{t:"role",e:ROLE[p.role].e,n:ROLE[p.role].n,d:ROLE[p.role].d,
-        mates:isWolfSide(p)?P.filter(isWolfSide).map(x=>x.name).join(", "):""});
+      const dr0=p.role==="blindseer"?ROLE.seer:ROLE[p.role];
+      sendTo(p.id,{t:"role",e:dr0.e,n:dr0.n,d:dr0.d,
+        mates:PACK(p)?P.filter(PACK).map(x=>x.name).join(", "):""});
       continue;
     }
     await modal(`🤫 Chuyền máy cho ${p.name}`,`Chỉ <b>${p.name}</b> được nhìn màn hình kế tiếp — người khác quay đi nhé.`,[`Tôi là ${p.name} — xem vai`]);
-    const mates=isWolfSide(p)&&P.filter(isWolfSide).length>1?`<div style="margin-top:8px">🐺 Bầy của bạn: <b>${P.filter(isWolfSide).map(q=>q.name).join(", ")}</b></div>`:"";
-    await modal(`Bạn là ${ROLE[p.role].n}`,`<div class="rolebig">${ROLE[p.role].e}</div><b>${ROLE[p.role].n}</b><div style="margin-top:6px">${ROLE[p.role].d}</div>${mates}`,["Đã nhớ — giấu bài 🤫"]);
+    const dr=p.role==="blindseer"?ROLE.seer:ROLE[p.role];
+    const mates=PACK(p)&&P.filter(PACK).length>1?`<div style="margin-top:8px">🐺 Bầy của bạn: <b>${P.filter(PACK).map(q=>q.name).join(", ")}</b></div>`:"";
+    await modal(`Bạn là ${dr.n}`,`<div class="rolebig">${dr.e}</div><b>${dr.n}</b><div style="margin-top:6px">${dr.d}</div>${mates}`,["Đã nhớ — giấu bài 🤫"]);
   }
 }
 
@@ -746,12 +754,12 @@ function renderSnap(m){
   P.forEach((p,i)=>{
     const s=$("seat"+p.id); if(!s)return;
     s.classList.toggle("dead",!p.alive);
-    s.querySelector(".rl").innerHTML=(!p.alive&&m.ps[i].role)?`${ROLE[m.ps[i].role].e} ${ROLE[m.ps[i].role].n}`:"";
+    s.querySelector(".rl").innerHTML=(m.ps[i].role&&!p.alive)?`${ROLE[m.ps[i].role].e} ${ROLE[m.ps[i].role].n}`:(!p.alive?"⚰️":"");
   });
   const pl=$("plist"); pl.innerHTML="";
   P.forEach((p,i)=>{
     const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
-    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr">${p.alive?"còn sống":(m.ps[i].role?ROLE[m.ps[i].role].e+" "+ROLE[m.ps[i].role].n:"đã chết")}</span>`;
+    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr">${p.alive?"còn sống":(m.ps[i].role?ROLE[m.ps[i].role].e+" "+ROLE[m.ps[i].role].n:"⚰️ đã mất")}</span>`;
     pl.appendChild(d);
   });
 }
@@ -803,7 +811,7 @@ $("btn-speed").onclick=()=>{SPD=SPD===1?0.45:1;$("btn-speed").textContent=SPD===
 $("btn-new").onclick=()=>{if(confirm("Bắt đầu ván mới? Ván hiện tại sẽ kết thúc."))location.reload();};
 function rolesHTML(){
   const team={wolf:["🐺 PHE SÓI","var(--bad)"],vill:["🌾 PHE DÂN","var(--good)"],solo:["🃏 PHE RIÊNG","var(--gold)"]};
-  const order=["wolf","alpha","seer","guard","witch","hunter","elder","cupid","bansoi","vill","fool"];
+  const order=["wolf","alpha","traitor","seer","guard","witch","hunter","elder","cupid","bansoi","cursed","blindseer","vill","fool"];
   let cur="",h="";
   order.forEach(k=>{
     const r=ROLE[k]; if(!r)return;
