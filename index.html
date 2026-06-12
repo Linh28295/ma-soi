@@ -197,7 +197,6 @@ let P=[], dayNo=0, gameOver=false, lastGuard=-1, healLeft=true, poisonLeft=true,
 const HOF_KEY="masoi-hof";
 const isAIp=p=>p.kind==="ai", isLoc=p=>p.kind==="local", isRem=p=>p.kind==="remote";
 const alive=()=>P.filter(p=>p.alive);
-const wolvesAlive=()=>alive().filter(p=>p.role==="wolf");
 const humansLoc=()=>P.filter(p=>isLoc(p)).length;
 
 /* ============ MẠNG (PeerJS, host giữ luật) ============ */
@@ -610,7 +609,6 @@ async function nightPhase(){
   await resolveHunters(deaths);
   return deaths;
 }
-function wolvesAlive2(){return alive().filter(isWolfSide);}
 
 /* ============ NGÀY ============ */
 async function doVote(){
@@ -694,7 +692,7 @@ async function revealRoles(){
         mates:PACK(p)?P.filter(PACK).map(x=>x.name).join(", "):""});
       continue;
     }
-    await modal(`🤫 Chuyền máy cho ${p.name}`,`Chỉ <b>${p.name}</b> được nhìn màn hình kế tiếp — người khác quay đi nhé.`,[`Tôi là ${p.name} — xem vai`]);
+    if(humansLoc()>1)await modal(`🤫 Chuyền máy cho ${p.name}`,`Chỉ <b>${p.name}</b> được nhìn màn hình kế tiếp — người khác quay đi nhé.`,[`Tôi là ${p.name} — xem vai`]);
     const dr=p.role==="blindseer"?ROLE.seer:ROLE[p.role];
     const mates=PACK(p)&&P.filter(PACK).length>1?`<div style="margin-top:8px">🐺 Bầy của bạn: <b>${P.filter(PACK).map(q=>q.name).join(", ")}</b></div>`:"";
     await modal(`Bạn là ${dr.n}`,`<div class="rolebig">${dr.e}</div><b>${dr.n}</b><div style="margin-top:6px">${dr.d}</div>${mates}`,["Đã nhớ — giấu bài 🤫"]);
