@@ -60,7 +60,7 @@
     .side .panel:nth-child(2) #plist{flex:1; overflow-y:auto; min-height:0;}
     .side .panel:nth-child(3){grid-column:2; grid-row:1 / span 2; display:flex; flex-direction:column; min-height:0;}
     .side .panel:nth-child(3) #log{flex:1; max-height:none; min-height:0; height:auto;}
-    .side .panel:nth-child(4){grid-column:1 / -1; grid-row:3;}
+    .side .panel:nth-child(4){grid-column:1 / -1; grid-row:3; max-height:38vh; overflow-y:auto;}
   }
   .panel{background:var(--panel); border:1px solid var(--hair); border-radius:18px; padding:14px 16px;
     box-shadow:0 3px 10px rgba(120,90,160,.08);}
@@ -121,7 +121,7 @@
 <div id="app">
   <header>
     <div class="logo">🐺</div>
-    <div><h1>MA SÓI</h1><div class="sub">LÀNG TRĂNG MƠ · 6–18 NGƯỜI · 2 PHIÊN BẢN</div></div>
+    <div><h1>MA SÓI</h1><div class="sub">LÀNG NANH SỮA · 6–18 NGƯỜI · 2 PHIÊN BẢN</div></div>
     <div class="hbtns">
       <button id="btn-theme" class="btn-ghost">Giao diện: Light</button>
       <button id="btn-roles" class="btn-ghost">📖 Vai trò</button>
@@ -133,10 +133,10 @@
   </header>
   <div class="stage">
     <div class="board-holder" id="village">
-      <div id="moon">🌕</div><div id="moonlb">LÀNG TRĂNG MƠ</div>
+      <div id="moon">🌕</div><div id="moonlb">LÀNG NANH SỮA</div>
     </div>
     <div class="side">
-      <div class="panel"><div id="phasebar">Chào mừng đến Làng Trăng Mơ…</div><div id="rolecard"></div></div>
+      <div class="panel"><div id="phasebar">Chào mừng đến Làng Nanh Sữa…</div><div id="rolecard"></div></div>
       <div class="panel"><h3>Dân làng</h3><div id="plist"></div></div>
       <div class="panel"><h3>Diễn biến</h3><div id="log"></div></div>
       <div class="panel">
@@ -284,7 +284,7 @@ function updateUI(){
       const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
       let badge=isAIp(p)?" <span style='font-size:9.5px;color:var(--muted)'>AI</span>":(isRem(p)?" 🌐":"");
       d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}${badge}</span>
-        <span class="pr" title="${gameOver?ROLE[p.role].n:(p.alive?"còn sống":"đã mất")}">${gameOver?ROLE[p.role].e:(p.alive?"":"⚰️")}</span>`;
+        <span class="pr" title="${gameOver?ROLE[p.role].n:(p.alive?"còn sống":"đã mất")}" style="${gameOver?"font-size:19px":""}">${gameOver?ROLE[p.role].e:(p.alive?"":"⚰️")}</span>`;
       pl.appendChild(d);
     });}
   if(NET.mode==="host")bcast(snapMsg());
@@ -307,10 +307,10 @@ Object.assign(ROLE,{
   cursed:{n:"Kẻ Nguyền Rủa",e:"🐍",team:"vill",d:"Dân lành mang lời nguyền: bị Sói cắn KHÔNG chết mà lặng lẽ HOÁ SÓI từ đêm sau (làng chỉ thấy một đêm bình yên). Treo cổ và độc dược vẫn giết được như thường."}
 });
 const PACK=p=>p.role==="wolf"||p.role==="alpha"; // bầy sói thật sự (Kẻ Phản Bội không thuộc bầy)
-let lovers=[], loversCross=false, foolWinner=-1, MODE="digital"; // digital | gm | online
+let lovers=[], loversCross=false, foolWinner=-1, claimT=-1, MODE="digital"; // digital | gm | online
 function defaultCfg(n){
-  return {wolves:Math.min(4,Math.max(1,Math.round(n/4))), alpha:n>=9, witch:n>=8, hunter:n>=8,
-    cupid:n>=10, fool:n>=10, elder:n>=12, bansoi:n>=12, traitor:n>=10, blindseer:n>=12, cursed:n>=14};
+  return {wolves:Math.min(4,Math.max(1,Math.round(n/4))), alpha:n>=7, witch:n>=8, hunter:n>=8,
+    cupid:n>=10, fool:n>=11, elder:n>=13, bansoi:n>=15, traitor:n>=12, blindseer:n>=14, cursed:n>=16};
 }
 function buildRoles(n,cfg){
   const r=[];
@@ -401,20 +401,21 @@ function aiWolfPick(pool){
 }
 function aiTalkLines(){
   if(MODE==="gm")return;
-  const speakers=shuffle(alive().filter(p=>isAIp(p))).slice(0,3);
-  speakers.forEach(p=>{
-    ensureMem(p);
-    const sAI=alive().find(q=>(q.role==="seer"||q.role==="blindseer")&&isAIp(q));
-    if(p===sAI&&Object.values(p.mem.known).includes("wolf")){
-      const tid=Number(Object.keys(p.mem.known).find(k=>p.mem.known[k]==="wolf"));
-      const t=P[tid];
-      if(t&&t.alive){
-        seerClaim=p.id;
-        log(`<span class="talk">🔮 <b>${p.name}</b>: "Tôi là TIÊN TRI! Đêm qua tôi soi <b>${t.name}</b> — CHÍNH LÀ SÓI!"</span>`,"imp");
-        alive().filter(q=>isAIp(q)&&!isWolfSide(q)).forEach(q=>{ensureMem(q);q.mem.susp[tid]=(q.mem.susp[tid]||5)+25;});
-        return;
-      }
+  // tiên tri AI (thật lẫn mù) luôn phát biểu trước
+  for(const sp of alive().filter(q=>(q.role==="seer"||q.role==="blindseer")&&isAIp(q))){
+    ensureMem(sp);
+    const tid=Object.keys(sp.mem.known).find(k=>sp.mem.known[k]==="wolf"&&P[k]&&P[k].alive);
+    if(tid!==undefined){
+      seerClaim=sp.id; claimT=Number(tid);
+      log(`<span class="talk">🔮 <b>${sp.name}</b>: "Tôi là TIÊN TRI! Tôi soi <b>${P[tid].name}</b> — CHÍNH LÀ SÓI!"</span>`,"imp");
+      alive().filter(q=>isAIp(q)&&!PACK(q)&&q!==sp).forEach(q=>{ensureMem(q);q.mem.susp[tid]=(q.mem.susp[tid]||5)+25;});
     }
+    Object.keys(sp.mem.known).filter(k=>sp.mem.known[k]==="clear"&&P[k]&&P[k].alive).forEach(k=>{
+      alive().filter(q=>isAIp(q)&&!PACK(q)&&q!==sp).forEach(q=>{ensureMem(q);q.mem.susp[k]=Math.min(q.mem.susp[k]===undefined?5:q.mem.susp[k],1);});
+    });
+  }
+  shuffle(alive().filter(p=>isAIp(p))).slice(0,2).forEach(p=>{
+    ensureMem(p);
     const pool=alive().filter(q=>q.id!==p.id&&(!PACK(p)||!PACK(q)));
     if(!pool.length)return;
     const t=aiTopTarget(p,pool);
@@ -446,7 +447,9 @@ function kill(p,cause,deaths){
   }
   p.alive=false; deaths.push(p); sfx.death();
   if(p.role==="hunter")pendingHunters.push(p);
-  if(p.role==="fool"&&cause==="vote")foolWinner=p.id;
+  if(p.role==="fool"&&cause==="vote"){foolWinner=p.id;
+    log(`🤡 <b>${p.name}</b> cười sằng sặc trên giá treo — hắn là <b>THẰNG NGỐC</b>, mơ ước cả đời là bị treo cổ! Hắn THẮNG RIÊNG, ván vẫn tiếp tục.`,true);
+    bcast({t:"notice",title:"🤡 NGỐC TOẠI NGUYỆN",body:p.name+" là Thằng Ngốc — thắng một mình! Ván tiếp tục."});}
   if(p.lover>-1&&P[p.lover].alive){
     log(`💔 <b>${P[p.lover].name}</b> ôm xác người yêu, đau đớn lìa đời theo.`,"imp");
     kill(P[p.lover],"heartbreak",deaths);
@@ -474,7 +477,6 @@ async function resolveHunters(deaths){
 
 /* ============ KIỂM TRA THẮNG ============ */
 function winState(){
-  if(foolWinner>-1)return "fool";
   const a=alive(), ws=a.filter(isWolfSide);
   if(loversCross&&a.length===2&&lovers.length===2&&a.every(p=>lovers.includes(p.id)))return "lovers";
   if(ws.length===0)return "vill";
@@ -483,10 +485,10 @@ function winState(){
 }
 function finishGame(w){
   gameOver=true; nightMode(false); updateUI(); sfx.win(); confetti();
-  const msg={vill:"🌾 PHE DÂN LÀNG TOÀN THẮNG — bầy sói đã bị quét sạch!",
+  let msg={vill:"🌾 PHE DÂN LÀNG TOÀN THẮNG — bầy sói đã bị quét sạch!",
     wolf:"🐺 BẦY SÓI NUỐT TRỌN NGÔI LÀNG — phe Sói thắng!",
-    fool:`🤡 ${foolWinner>-1?P[foolWinner].name:"Thằng Ngốc"} BỊ TREO CỔ TRONG SUNG SƯỚNG — Ngốc thắng một mình!`,
     lovers:`💘 TÌNH YÊU CHIẾN THẮNG TẤT CẢ — ${lovers.map(i=>P[i].name).join(" & ")} là 2 người cuối cùng!`}[w];
+  if(foolWinner>-1)msg+=` (riêng 🤡 ${P[foolWinner].name} đã thắng phần mình từ trước!)`;
   setPhase(msg); log(`<b>${msg}</b>`,true);
   log(`📜 Vai trò: ${P.map(p=>`${p.ava}${p.name} = ${ROLE[p.role].e}${ROLE[p.role].n}`).join(" · ")}`);
   bcast({t:"notice",title:"🏁 KẾT THÚC",body:msg});
@@ -529,7 +531,7 @@ async function nightPhase(){
   dayNo++; pendingHunters=[];
   nightMode(true); sfx.night();
   setPhase(`🌙 Đêm thứ ${dayNo} — cả làng chìm vào giấc ngủ`);
-  log(`<b>🌙 Đêm thứ ${dayNo} buông xuống Làng Trăng Mơ.</b>`,true);
+  log(`<b>🌙 Đêm thứ ${dayNo} buông xuống Làng Nanh Sữa.</b>`,true);
   updateUI(); await sleep(1000);
   if(dayNo===1)await nightZero();
   // Bảo Vệ
@@ -538,7 +540,7 @@ async function nightPhase(){
   if(g){
     setPhase("🛡️ Bảo Vệ thức dậy…");
     const pool=alive().filter(q=>q.id!==lastGuard);
-    if(isAIp(g)){const sc=pool.find(q=>q.id===seerClaim);protectId=(sc&&Math.random()<.7)?sc.id:pool[rnd(pool.length)].id;}
+    if(isAIp(g)){const sc=pool.find(q=>q.id===seerClaim);protectId=(sc&&Math.random()<.5)?sc.id:pool[rnd(pool.length)].id;}
     else protectId=await actPick(g,"🛡️ Bảo Vệ","Đêm nay che chắn cho ai? (không lặp người vừa che đêm trước)",pool);
     lastGuard=protectId;
   }
@@ -580,7 +582,10 @@ async function nightPhase(){
     }
     if(poisonLeft){
       let tid=-1;
-      if(isAIp(w)){ if(dayNo>=3&&Math.random()<.3){const pool=alive().filter(q=>q.id!==w.id);tid=aiTopTarget(w,pool).id;} }
+      if(isAIp(w)){
+        if(claimT>-1&&P[claimT]&&P[claimT].alive&&claimT!==w.id&&Math.random()<.4)tid=claimT;
+        else if(dayNo>=3&&Math.random()<.3){const pool=alive().filter(q=>q.id!==w.id);tid=aiTopTarget(w,pool).id;}
+      }
       else tid=await actPick(w,"🧪 Phù Thủy — Bình ĐỘC",`Dùng bình độc duy nhất cho ai?${healLeft?"":" (bình cứu đã hết)"}`,alive().filter(q=>q.id!==w.id),"Không dùng đêm nay");
       if(tid>-1){poisoned=tid;poisonLeft=false;}
     }
@@ -609,12 +614,20 @@ async function doVote(){
     return await actPick({kind:"manual"},"🗳️ Quản trò nhập kết quả","Cả làng ngoài bàn biểu quyết treo ai? Đếm phiếu thật rồi chọn:",pool,"Không ai bị treo");
   }
   const tally={};
+  let cons=null;
+  {
+    const sum={};
+    pool.filter(p=>isAIp(p)&&!PACK(p)).forEach(p=>pool.forEach(q=>{if(q.id!==p.id)sum[q.id]=(sum[q.id]||0)+aiSusp(p,q);}));
+    const ids=Object.keys(sum); if(ids.length)cons=Number(ids.sort((a,b)=>sum[b]-sum[a])[0]);
+  }
   for(const p of pool){
     let tid=-1;
     const opts=pool.filter(q=>q.id!==p.id);
     if(isAIp(p)){
       const cand=PACK(p)?opts.filter(q=>!PACK(q)):opts;
       tid=cand.length?aiTopTarget(p,cand).id:-1;
+      const cp=Math.min(.85,Math.max(.30,(20+3*P.length)/100));
+      if(!PACK(p)&&cons!==null&&cons!==p.id&&Math.random()<cp)tid=cons;
     }else{
       tid=await actPick(p,"🗳️ Bỏ phiếu",`<b>${p.name}</b>, bạn muốn treo cổ ai?`,opts,"Phiếu trắng");
     }
@@ -762,7 +775,7 @@ function renderSnap(m){
   const pl=$("plist"); pl.innerHTML="";
   P.forEach((p,i)=>{
     const d=document.createElement("div"); d.className="pcard"+(p.alive?"":" dead");
-    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr" title="${m.ps[i].role?ROLE[m.ps[i].role].n:""}">${m.ps[i].role?ROLE[m.ps[i].role].e:(p.alive?"":"⚰️")}</span>`;
+    d.innerHTML=`<span class="pa">${p.ava}</span><span>${p.name}</span><span class="pr" title="${m.ps[i].role?ROLE[m.ps[i].role].n:""}" style="${m.ps[i].role?"font-size:19px":""}">${m.ps[i].role?ROLE[m.ps[i].role].e:(p.alive?"":"⚰️")}</span>`;
     pl.appendChild(d);
   });
 }
@@ -830,13 +843,13 @@ $("btn-roles").onclick=()=>modal("📖 Tất cả thân phận trong làng",`<di
 $("btn-hof").onclick=()=>{
   let h=[]; try{h=JSON.parse(localStorage.getItem(HOF_KEY)||"[]");}catch(e){}
   const body=h.length?h.map((e,i)=>`<div style="text-align:left;border-bottom:1px dashed var(--hair);padding:5px 0;font-size:12.5px">${i+1}. ${e.w}<br><span style="font-size:10.5px;color:var(--muted)">${e.n} người · ${e.d} đêm · ${e.date}</span></div>`).join(""):"Chưa có ván nào kết thúc trên máy này. 🐺";
-  modal("🏆 Bảng vàng Làng Trăng Mơ",body,["Đóng"]);
+  modal("🏆 Bảng vàng Làng Nanh Sữa",body,["Đóng"]);
 };
 
 /* ============ KHỞI ĐỘNG ============ */
 (async function boot(){
   applyTheme(localStorage.getItem("masoi-theme")||"light");
-  const mi=await modal("🐺 MA SÓI — Làng Trăng Mơ",
+  const mi=await modal("🐺 MA SÓI — Làng Nanh Sữa",
     `<div style="text-align:left;font-size:12.5px;line-height:1.7">
      <b>🎩 Bản Quản Trò:</b> chỉ quản trò cầm máy — chọn sĩ số (6–18) & vai đặc biệt, app chia vai, quản trò giữ <b>bảng vai bí mật</b> và nhập kết quả của bàn chơi thật.<br>
      <b>🌐 Bản Online:</b> mỗi người một máy — vai chỉ hiện trên máy của chính người đó.</div>`,
@@ -846,7 +859,7 @@ $("btn-hof").onclick=()=>{
   else if(mi===1){await setupOnlineHost();}
   else{MODE="digital";await setupDigital();}
   buildSeats(); updateUI();
-  log(`🌕 Chào mừng đến <b>Làng Trăng Mơ</b>! ${P.length} người nhập cuộc — ${P.filter(isWolfSide).length} Sói ẩn mình đâu đó.`,true);
+  log(`🌕 Chào mừng đến <b>Làng Nanh Sữa</b>! ${P.length} người nhập cuộc — ${P.filter(isWolfSide).length} Sói ẩn mình đâu đó.`,true);
   if(MODE==="gm")await gmShowRoles();
   else await revealRoles();
   gameLoop();
