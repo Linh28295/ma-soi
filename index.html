@@ -355,7 +355,8 @@ async function setupGM(){
     await modal("🎩 Chế độ Quản Trò — bàn chơi thật",
       `<div style="text-align:left;font-size:12.5px;color:var(--muted);margin-bottom:8px">Người thật ngồi chơi ngoài đời. App chia vai, dẫn dắt đêm/ngày — bạn (quản trò) nhập kết quả, app lo phần còn lại: máu, bình thuốc, tình nhân, điều kiện thắng.</div>
       <b>Tên người chơi (mỗi dòng một tên, 6–18 người):</b>
-      <textarea id="gmnames" rows="8" style="width:100%;font-family:inherit;font-size:13px;padding:9px;border:1.5px solid var(--hair);border-radius:10px;background:var(--bg);color:var(--ink);margin:6px 0"></textarea>
+      <textarea id="gmnames" rows="8" style="width:100%;font-family:inherit;font-size:13px;padding:9px;border:1.5px solid var(--hair);border-radius:10px;background:var(--bg);color:var(--ink);margin:6px 0">${(localStorage.getItem("masoi-gm-names")||"").replace(/&/g,"&amp;").replace(/</g,"&lt;")}</textarea>
+      <div style="font-size:11px;color:var(--muted);text-align:left;margin-bottom:4px">💾 Danh sách tên ván trước được điền sẵn — sửa trực tiếp nếu đội hình thay đổi.</div>
       ${cfgBoxes(defaultCfg(n0))}`,["Chia vai & bắt đầu"]);
     const names=[...new Set($("gmnames").value.split("\n").map(x=>x.trim()).filter(Boolean))];
     const cfg=readCfg(names.length);
@@ -363,6 +364,7 @@ async function setupGM(){
     const roles=buildRoles(names.length,cfg);
     if(!roles){await modal("⚠️ Vai nhiều hơn người","Số vai đặc biệt + Sói đang vượt quá sĩ số. Bỏ bớt vai hoặc thêm người.",["Sửa lại"]);continue;}
     MODE="gm";
+    try{localStorage.setItem("masoi-gm-names",names.join("\n"));}catch(e){}
     P=names.map((nm,i)=>({id:i,name:nm,ava:AVAS[i%AVAS.length],kind:"manual",role:roles[i],alive:true,lover:-1,idol:-1,shield:roles[i]==="elder",mem:null}));
     return;
   }
